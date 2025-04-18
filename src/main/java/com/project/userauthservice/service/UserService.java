@@ -9,42 +9,32 @@ import com.project.userauthservice.repository.RoleRepository;
 import com.project.userauthservice.repository.UserRepository;
 import com.project.userauthservice.repository.UserRoleRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
-
-    @Autowired
-    public UserService(UserRepository userRepository,
-                       RoleRepository roleRepository,
-                       UserRoleRepository userRoleRepository,
-                       PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.userRoleRepository = userRoleRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
+    
     @Transactional
     public User registerNewUser(UserRegistrationDto registrationDto) {
         // Check if username already exists
         if (userRepository.existsByUsername(registrationDto.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
-
+        
         // Check if email already exists
         if (userRepository.existsByEmail(registrationDto.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
-
+        
         // Create new user
         User user = new User();
         user.setUsername(registrationDto.getUsername());
@@ -54,22 +44,22 @@ public class UserService {
         user.setActive(true);
         user.setEmailVerified(false); // Will be set to true after email verification
         user.setCreatedAt(LocalDateTime.now());
-
+        
         // Save user
         User savedUser = userRepository.save(user);
-
+        
         // Assign default user role
         Role userRole = roleRepository.findByName("ROLE_USER")
                 .orElseThrow(() -> new RuntimeException("Default role not found"));
-
+        
         UserRole userUserRole = new UserRole();
         userUserRole.setUser(savedUser);
         userUserRole.setRole(userRole);
         userRoleRepository.save(userUserRole);
-
+        
         return savedUser;
     }
-
+    
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));

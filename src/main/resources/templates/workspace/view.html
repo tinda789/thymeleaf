@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title th:text="${workspace.name}">Workspace</title>
+    <style>
+        .workspace-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .workspace-logo {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .workspace-key {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .member-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+        }
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .role-badge {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: #f0f2f5;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container">
+        <!-- Workspace Header -->
+        <div class="workspace-header">
+            <div class="d-flex align-items-center">
+                <div class="workspace-logo me-4" th:text="${#strings.substring(workspace.name, 0, 1)}">W</div>
+                <div>
+                    <h2 th:text="${workspace.name}">Workspace Name</h2>
+                    <span class="workspace-key" th:text="${workspace.workspaceKey}">WORK-1</span>
+                    <p class="mt-2 mb-0" th:text="${workspace.description}">Workspace description</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3>0</h3>
+                    <p class="mb-0">Dự án</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 th:text="${#lists.size(workspace.members)}">0</h3>
+                    <p class="mb-0">Thành viên</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3>0</h3>
+                    <p class="mb-0">Task đang làm</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3>0</h3>
+                    <p class="mb-0">Task hoàn thành</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Projects Section -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Dự án</h5>
+                        <button class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-2"></i>Tạo dự án
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted text-center">Chưa có dự án nào</p>
+                    </div>
+                </div>
+            </div>
+
+           <!-- Members Section -->
+<div class="col-md-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Thành viên</h5>
+            <a th:href="@{/workspaces/{id}/members(id=${workspace.id})}" class="btn btn-primary btn-sm">
+                <i class="fas fa-users-cog me-2"></i>Quản lý
+            </a>
+        </div>
+        <div class="card-body">
+            <div th:each="member : ${workspace.members}" class="member-card">
+                <div class="d-flex align-items-center">
+                    <div class="member-avatar me-3" th:text="${#strings.substring(member.user.fullName, 0, 1)}">A</div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0" th:text="${member.user.fullName}">Member Name</h6>
+                        <small class="text-muted" th:text="${member.user.email}">email@example.com</small>
+                    </div>
+                    <span class="role-badge" th:text="${member.role}">OWNER</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

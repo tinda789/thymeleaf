@@ -60,6 +60,10 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Thêm trường locked
+    @Column(nullable = false)
+    private boolean locked = false; // Mặc định là false (không khóa tài khoản)
+
     // Quan hệ với UserRole
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<UserRole> userRoles = new HashSet<>();
@@ -73,6 +77,11 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // Phương thức để kiểm tra tài khoản có bị khóa hay không
+    public boolean isLocked() {
+        return locked;
     }
 
     public enum Gender {

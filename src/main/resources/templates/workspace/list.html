@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title>Danh sách Workspace</title>
+    <style>
+        .workspace-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .workspace-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .workspace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .workspace-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .workspace-key {
+            font-size: 12px;
+            background: #f0f2f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #666;
+        }
+        .create-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .create-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container">
+        <div class="workspace-header">
+            <h2>Workspace của bạn</h2>
+            <a th:href="@{/workspaces/create}" class="btn create-btn">
+                <i class="fas fa-plus me-2"></i>Tạo Workspace mới
+            </a>
+        </div>
+
+        <!-- Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="row" th:if="${!workspaces.isEmpty()}">
+            <div class="col-md-4" th:each="workspace : ${workspaces}">
+                <div class="workspace-card">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="workspace-logo me-3" th:text="${#strings.substring(workspace.name, 0, 1)}">W</div>
+                        <div>
+                            <h5 class="mb-0" th:text="${workspace.name}">Workspace Name</h5>
+                            <span class="workspace-key" th:text="${workspace.workspaceKey}">WORK-1</span>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-3" th:text="${workspace.description}">Workspace description</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>
+                            <span th:text="${workspace.owner.fullName}">Owner Name</span>
+                        </small>
+                        <a th:href="@{/workspaces/{id}(id=${workspace.id})}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-arrow-right me-1"></i>Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${workspaces.isEmpty()}" class="text-center mt-5">
+            <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+            <h4>Bạn chưa có workspace nào</h4>
+            <p class="text-muted">Tạo workspace đầu tiên để bắt đầu quản lý dự án của bạn</p>
+            <a th:href="@{/workspaces/create}" class="btn create-btn mt-3">
+                <i class="fas fa-plus me-2"></i>Tạo Workspace mới
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

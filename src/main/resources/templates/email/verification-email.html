@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác thực email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 30px;
+            border: 1px solid #ddd;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Xác thực tài khoản của bạn</h2>
+        </div>
+        
+        <p>Xin chào <strong th:text="${username}">username</strong>,</p>
+        
+        <p>Cảm ơn bạn đã đăng ký tài khoản. Để hoàn tất quá trình đăng ký, vui lòng xác thực địa chỉ email của bạn bằng cách nhấp vào liên kết bên dưới:</p>
+        
+        <div style="text-align: center;">
+            <a th:href="${verificationLink}" class="button">Xác thực email</a>
+        </div>
+        
+        <p>Hoặc copy và dán liên kết sau vào trình duyệt của bạn:</p>
+        <p style="word-break: break-all; background-color: #f5f5f5; padding: 10px; border-radius: 5px;" 
+           th:text="${verificationLink}">verification link</p>
+        
+        <p>Liên kết này sẽ hết hạn sau 24 giờ.</p>
+        
+        <p>Nếu bạn không tạo tài khoản, vui lòng bỏ qua email này.</p>
+        
+        <div class="footer">
+            <p>Email này được gửi tự động. Vui lòng không trả lời email này.</p>
+        </div>
+    </div>
+</body>
+</html>

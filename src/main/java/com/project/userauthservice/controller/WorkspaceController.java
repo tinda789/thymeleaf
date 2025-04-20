@@ -15,6 +15,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -58,22 +59,33 @@ public class WorkspaceController {
 
     @GetMapping("/{id}")
     public String viewWorkspace(@PathVariable Long id, Model model) {
-        Workspace workspace = workspaceService.getWorkspaceById(id);
-        model.addAttribute("workspace", workspace);
-        return "workspace/view";
+        try {
+            Workspace workspace = workspaceService.getWorkspaceById(id);
+            model.addAttribute("workspace", workspace);
+            return "workspace/view";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "error";
+        }
     }
     
     @GetMapping("/{id}/members")
     public String viewMembers(@PathVariable Long id, Model model) {
-        Workspace workspace = workspaceService.getWorkspaceById(id);
-        List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(id);
-        
-        model.addAttribute("workspace", workspace);
-        model.addAttribute("members", members);
-        model.addAttribute("memberForm", new WorkspaceMemberAddDto());
-        model.addAttribute("roles", WorkspaceMember.WorkspaceRole.values());
-        
-        return "workspace/members";
+        try {
+            Workspace workspace = workspaceService.getWorkspaceById(id);
+            List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(id);
+            
+            model.addAttribute("workspace", workspace);
+            model.addAttribute("members", members);
+            model.addAttribute("memberForm", new WorkspaceMemberAddDto());
+            model.addAttribute("roles", Arrays.asList(WorkspaceMember.WorkspaceRole.values()));
+            
+            return "workspace/members";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("errorMessage", "Không thể tải danh sách thành viên: " + e.getMessage());
+            return "error";
+        }
     }
     
     @PostMapping("/{id}/members/add")

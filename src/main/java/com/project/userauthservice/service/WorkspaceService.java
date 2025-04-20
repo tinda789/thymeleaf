@@ -74,9 +74,32 @@ public class WorkspaceService {
                 .toList();
     }
     
+    @Transactional(readOnly = true)
     public Workspace getWorkspaceById(Long id) {
-        return workspaceRepository.findById(id)
+        Workspace workspace = workspaceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
+        // Force load members collection
+        workspace.getMembers().size();
+        return workspace;
+    }
+    
+    @Transactional(readOnly = true)
+    public List<WorkspaceMember> getWorkspaceMembers(Long workspaceId) {
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+        
+        List<WorkspaceMember> members = workspaceMemberRepository.findByWorkspace(workspace);
+        
+        // Force load user details to avoid lazy loading issues
+        members.forEach(member -> {
+            if (member.getUser() != null) {
+                member.getUser().getUsername();
+                member.getUser().getEmail();
+                member.getUser().getFullName();
+            }
+        });
+        
+        return members;
     }
     
     @Transactional
@@ -114,12 +137,6 @@ public class WorkspaceService {
             currentMember.getRole() != WorkspaceMember.WorkspaceRole.ADMIN) {
             throw new RuntimeException("Bạn không có quyền thêm thành viên");
         }
-    }
-    
-    public List<WorkspaceMember> getWorkspaceMembers(Long workspaceId) {
-        Workspace workspace = workspaceRepository.findById(workspaceId)
-                .orElseThrow(() -> new RuntimeException("Workspace not found"));
-        return workspaceMemberRepository.findByWorkspace(workspace);
     }
     
     @Transactional

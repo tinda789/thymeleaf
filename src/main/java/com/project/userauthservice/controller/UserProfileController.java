@@ -59,18 +59,18 @@ public class UserProfileController {
     
 
     @PostMapping("/update-avatar")
-    public String updateAvatar(@RequestParam("avatar") MultipartFile file,
-                             @AuthenticationPrincipal UserDetails userDetails,
-                             RedirectAttributes redirectAttributes) {
-        try {
-            userService.updateAvatar(userDetails.getUsername(), file);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật ảnh đại diện thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể cập nhật ảnh đại diện: " + e.getMessage());
-        }
-        
-        return "redirect:/profile";
+public String updateAvatar(@RequestParam("avatar") MultipartFile file,
+                           @AuthenticationPrincipal UserDetails userDetails,
+                           RedirectAttributes redirectAttributes) {
+    try {
+        userService.updateAvatar(userDetails.getUsername(), file);
+        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật ảnh đại diện thành công!");
+    } catch (Exception e) {
+        redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
     }
+    
+    return "redirect:/profile";
+}
 
     @GetMapping("/change-password")
     public String changePasswordForm(Model model) {

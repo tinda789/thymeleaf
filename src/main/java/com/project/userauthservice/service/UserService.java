@@ -81,6 +81,8 @@ public class UserService {
     }
     
     private void createVerificationTokenAndSendEmail(User user) {
+            verificationTokenRepository.findByUser(user).ifPresent(verificationTokenRepository::delete);
+
         String token = UUID.randomUUID().toString();
         VerificationToken verificationToken = new VerificationToken();
         verificationToken.setToken(token);
@@ -153,60 +155,72 @@ public class UserService {
             throw new RuntimeException("Email đã được sử dụng");
         }
         
+        // Kiểm tra nếu email thay đổi
+        boolean emailChanged = !user.getEmail().equals(profileDto.getEmail());
+        
         user.setFullName(profileDto.getFullName());
         user.setEmail(profileDto.getEmail());
         user.setPhoneNumber(profileDto.getPhoneNumber());
         user.setDateOfBirth(profileDto.getDateOfBirth());
         user.setGender(profileDto.getGender());
         
+        // Nếu email thay đổi, đặt lại trạng thái xác thực
+        if (emailChanged) {
+            user.setEmailVerified(false);
+            
+            // Tạo token xác thực mới
+            createVerificationTokenAndSendEmail(user);
+        }
+        
         return userRepository.save(user);
     }
     
     @Transactional
     public void updateAvatar(String username, MultipartFile file) throws IOException {
+        // Kiểm tra file ảnh
         if (file.isEmpty()) {
-            throw new RuntimeException("File ảnh không được để trống");
+            throw new RuntimeException("Vui lòng chọn ảnh");
         }
-        
-        // Kiểm tra loại file
+
+        // Kiểm tra kích thước file (5MB)
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new RuntimeException("Kích thước ảnh không được vượt quá 5MB");
+        }
+
+        // Kiểm tra định dạng file
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new RuntimeException("Chỉ chấp nhận file ảnh");
         }
-        
-        // Kiểm tra kích thước file
-        if (file.getSize() > 5 * 1024 * 1024) { // 5MB
-            throw new RuntimeException("Kích thước file không được vượt quá 5MB");
+
+        // Tạo thư mục lưu avatar nếu chưa tồn tại
+        Path uploadDir = Paths.get(AVATAR_UPLOAD_DIR);
+        if (!Files.exists(uploadDir)) {
+            Files.createDirectories(uploadDir);
         }
-        
-        // Tạo tên file unique
+
+        // Tạo tên file duy nhất
         String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-        
-        // Tạo thư mục nếu chưa tồn tại
-        Path uploadPath = Paths.get(AVATAR_UPLOAD_DIR);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-        
+        Path filePath = uploadDir.resolve(fileName);
+
         // Lưu file
-        Path filePath = uploadPath.resolve(fileName);
         Files.copy(file.getInputStream(), filePath);
-        
-        // Cập nhật database
+
+        // Tìm user
         User user = findByUsername(username);
-        
-        // Xóa avatar cũ nếu có
+
+        // Xóa avatar cũ nếu tồn tại
         if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
             try {
-                Path oldAvatar = Paths.get(user.getAvatar());
-                Files.deleteIfExists(oldAvatar);
+                Path oldAvatarPath = Paths.get(AVATAR_UPLOAD_DIR + user.getAvatar());
+                Files.deleteIfExists(oldAvatarPath);
             } catch (Exception e) {
-                // Log lỗi nếu không xóa được file cũ
                 e.printStackTrace();
             }
         }
-        
-        user.setAvatar(AVATAR_UPLOAD_DIR + fileName);
+
+        // Cập nhật avatar mới
+        user.setAvatar(fileName);
         userRepository.save(user);
     }
     
@@ -254,8 +268,6 @@ public class UserService {
         user.setActive(false);
         userRepository.save(user);
     }
-    
-
     
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);

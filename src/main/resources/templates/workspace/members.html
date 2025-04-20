@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/dashboard-layout}">
 <head>
-    <title>Quản lý thành viên - <span th:text="${workspace.name}">Workspace</span></title>
+    <title>Quản lý thành viên</title>
     <style>
         .member-card {
             background: white;
@@ -46,8 +46,8 @@
 <div layout:fragment="content">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Thành viên của <span th:text="${workspace.name}">Workspace</span></h2>
-            <a th:href="@{/workspaces/{id}(id=${workspace.id})}" class="btn btn-outline-secondary">
+            <h2>Thành viên của <span th:if="${workspace}" th:text="${workspace.name}">Workspace</span></h2>
+            <a th:if="${workspace}" th:href="@{/workspaces/{id}(id=${workspace.id})}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Quay lại
             </a>
         </div>
@@ -65,7 +65,7 @@
         </div>
 
         <!-- Add Member Form -->
-        <div class="add-form">
+        <div class="add-form" th:if="${workspace}">
             <h5 class="mb-3">Thêm thành viên mới</h5>
             <form th:action="@{/workspaces/{id}/members/add(id=${workspace.id})}" th:object="${memberForm}" method="post">
                 <div class="row">
@@ -73,26 +73,23 @@
                         <label for="email" class="form-label">Email thành viên</label>
                         <input type="email" 
                                class="form-control" 
-                               th:class="${#fields.hasErrors('email')} ? 'form-control is-invalid' : 'form-control'"
                                id="email" 
-                               th:field="*{email}" 
+                               th:field="*{email}"
                                placeholder="email@example.com" 
                                required>
-                        <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="role" class="form-label">Vai trò</label>
                         <select class="form-select" 
-                                th:class="${#fields.hasErrors('role')} ? 'form-select is-invalid' : 'form-select'"
                                 id="role" 
-                                th:field="*{role}" 
+                                th:field="*{role}"
                                 required>
                             <option value="">Chọn vai trò</option>
                             <option th:each="role : ${roles}" 
+                                    th:if="${role.name() != 'OWNER'}"
                                     th:value="${role}" 
                                     th:text="${role}">Role</option>
                         </select>
-                        <div class="invalid-feedback" th:if="${#fields.hasErrors('role')}" th:errors="*{role}"></div>
                     </div>
                     <div class="col-md-2 mb-3">
                         <label class="form-label">&nbsp;</label>
@@ -107,29 +104,35 @@
         <!-- Members List -->
         <div class="row">
             <div class="col-12">
-                <div th:each="member : ${members}" class="member-card">
-                    <div class="d-flex align-items-center">
-                        <div class="member-avatar me-3" th:text="${#strings.substring(member.user.fullName, 0, 1)}">A</div>
-                        <div class="flex-grow-1">
-                            <h5 class="mb-1" th:text="${member.user.fullName}">Member Name</h5>
-                            <p class="mb-0 text-muted" th:text="${member.user.email}">email@example.com</p>
-                            <small class="text-muted">
-                                Tham gia: <span th:text="${#temporals.format(member.joinedAt, 'dd/MM/yyyy')}">01/01/2025</span>
-                            </small>
-                        </div>
-                        <div class="me-3">
-                            <span class="role-badge" th:classappend="'role-' + ${member.role}" th:text="${member.role}">MEMBER</span>
-                        </div>
-                        <div th:if="${member.role != T(com.project.userauthservice.entity.workspace.WorkspaceMember.WorkspaceRole).OWNER}">
-                            <form th:action="@{/workspaces/{workspaceId}/members/{memberId}/remove(workspaceId=${workspace.id},memberId=${member.id})}" 
-                                  method="post" 
-                                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa thành viên này?');">
-                                <button type="submit" class="btn btn-danger btn-sm">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                <div th:if="${members != null && !members.empty}">
+                    <div th:each="member : ${members}" class="member-card">
+                        <div class="d-flex align-items-center">
+                            <div class="member-avatar me-3" 
+                                 th:text="${member.user.fullName != null ? #strings.substring(member.user.fullName, 0, 1) : '?'}">A</div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1" th:text="${member.user.fullName}">Member Name</h5>
+                                <p class="mb-0 text-muted" th:text="${member.user.email}">email@example.com</p>
+                                <small class="text-muted">
+                                    Tham gia: <span th:text="${#temporals.format(member.joinedAt, 'dd/MM/yyyy')}">01/01/2025</span>
+                                </small>
+                            </div>
+                            <div class="me-3">
+                                <span class="role-badge" th:classappend="${'role-' + member.role}" th:text="${member.role}">MEMBER</span>
+                            </div>
+                            <div th:if="${member.role.name() != 'OWNER'}">
+                                <form th:action="@{/workspaces/{workspaceId}/members/{memberId}/remove(workspaceId=${workspace.id},memberId=${member.id})}" 
+                                      method="post" 
+                                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa thành viên này?');">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
+                </div>
+                <div th:if="${members == null || members.empty}" class="text-center">
+                    <p class="text-muted">Chưa có thành viên nào</p>
                 </div>
             </div>
         </div>

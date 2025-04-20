@@ -1,4 +1,3 @@
-// controller/ProjectController.java
 package com.project.userauthservice.controller;
 
 import com.project.userauthservice.dto.ProjectCreateDto;
@@ -86,6 +85,12 @@ public class ProjectController {
         
         // Lấy danh sách task theo status
         Map<Task.TaskStatus, List<Task>> tasksByStatus = taskService.getTasksByProjectGroupedByStatus(id);
+        
+        // Debug log
+        System.out.println("Total tasks by status map size: " + tasksByStatus.size());
+        for (Map.Entry<Task.TaskStatus, List<Task>> entry : tasksByStatus.entrySet()) {
+            System.out.println("Status " + entry.getKey() + ": " + entry.getValue().size() + " tasks");
+        }
         
         model.addAttribute("project", project);
         model.addAttribute("workspace", project.getWorkspace());

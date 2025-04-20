@@ -1,4 +1,3 @@
-// service/TaskService.java
 package com.project.userauthservice.service;
 
 import com.project.userauthservice.dto.TaskCreateDto;
@@ -12,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,8 +48,8 @@ public class TaskService {
                 .project(project)
                 .reporter(reporter)
                 .assignee(assignee)
-                .type(dto.getType())
-                .priority(dto.getPriority())
+                .type(dto.getType() != null ? dto.getType() : Task.TaskType.TASK)
+                .priority(dto.getPriority() != null ? dto.getPriority() : Task.TaskPriority.MEDIUM)
                 .dueDate(dto.getDueDate())
                 .estimatedHours(dto.getEstimatedHours())
                 .status(Task.TaskStatus.TODO)
@@ -59,13 +60,15 @@ public class TaskService {
     
     private String generateTaskKey(Project project) {
         String projectKey = project.getProjectKey();
-        int count = taskRepository.findByProject(project).size();
-        String taskKey;
+        List<Task> projectTasks = taskRepository.findByProject(project);
+        int nextNumber = projectTasks.size() + 1;
+        String taskKey = projectKey + "-" + nextNumber;
         
-        do {
-            count++;
-            taskKey = projectKey + "-" + count;
-        } while (taskRepository.existsByTaskKey(taskKey));
+        // Đảm bảo không bị trùng key
+        while (taskRepository.existsByTaskKey(taskKey)) {
+            nextNumber++;
+            taskKey = projectKey + "-" + nextNumber;
+        }
         
         return taskKey;
     }
@@ -78,8 +81,23 @@ public class TaskService {
     
     public Map<Task.TaskStatus, List<Task>> getTasksByProjectGroupedByStatus(Long projectId) {
         List<Task> tasks = getTasksByProject(projectId);
-        return tasks.stream()
-                .collect(Collectors.groupingBy(Task::getStatus));
+        Map<Task.TaskStatus, List<Task>> tasksByStatus = new HashMap<>();
+        
+        // Khởi tạo map với tất cả các status để tránh null pointer
+        for (Task.TaskStatus status : Task.TaskStatus.values()) {
+            tasksByStatus.put(status, new ArrayList<>());
+        }
+        
+        // Nhóm tasks theo status
+        if (!tasks.isEmpty()) {
+            Map<Task.TaskStatus, List<Task>> groupedTasks = tasks.stream()
+                    .collect(Collectors.groupingBy(Task::getStatus));
+            
+            // Cập nhật vào map đã khởi tạo
+            tasksByStatus.putAll(groupedTasks);
+        }
+        
+        return tasksByStatus;
     }
     
     public Task getTaskById(Long id) {

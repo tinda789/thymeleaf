@@ -56,6 +56,7 @@ public class SecurityConfig {
                 .requestMatchers("/profile/**").authenticated()
                 .requestMatchers("/workspaces/**").authenticated()
                 .requestMatchers("/subscription/**").authenticated() 
+                
 
                 .anyRequest().authenticated()
             )

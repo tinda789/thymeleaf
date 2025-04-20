@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title>Xác Nhận Thanh Toán</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Xác Nhận Thanh Toán</h1>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Chi Tiết Thanh Toán</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <div th:if="${payment}" class="alert alert-info">
+                            <p>Mã giao dịch: <strong th:text="${payment.transactionCode}"></strong></p>
+                            <p>Số tiền: <strong th:text="${#numbers.formatCurrency(payment.amount)}"></strong></p>
+                            <p>Gói: <strong th:text="${payment.subscription.type}"></strong></p>
+                        </div>
+                        
+                        <form th:action="@{/subscription/confirm}" method="post">
+                            <div class="mb-3">
+                                <label class="form-label">Nhập mã giao dịch để xác nhận</label>
+                                <input type="text" name="transactionCode" class="form-control" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check me-2"></i>Xác Nhận Thanh Toán
+                            </button>
+                            <a th:href="@{/subscription}" class="btn btn-secondary ms-2">
+                                <i class="fas fa-times me-2"></i>Hủy
+                            </a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

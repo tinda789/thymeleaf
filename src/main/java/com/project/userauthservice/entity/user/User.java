@@ -1,4 +1,5 @@
 package com.project.userauthservice.entity.user;
+import com.project.userauthservice.entity.payment.Subscription;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -59,6 +60,12 @@ public class User {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    @Column(name = "subscription_type")
+@Enumerated(EnumType.STRING)
+private Subscription.SubscriptionType subscriptionType = Subscription.SubscriptionType.FREE;
+
+@Column(name = "max_workspaces", nullable = false)
+private int maxWorkspaces = 1; // Mặc định cho gói FREE
 
     // Thêm trường locked
     @Column(nullable = false)

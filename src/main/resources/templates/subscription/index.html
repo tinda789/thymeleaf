@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title>Nâng Cấp Tài Khoản</title>
+    <style>
+        .subscription-card {
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .subscription-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .pricing-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .btn-upgrade {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Nâng Cấp Tài Khoản</h1>
+        </div>
+
+        <div class="row">
+            <div th:each="subscription : ${subscriptions}" class="col-md-3 mb-4">
+                <div class="card subscription-card position-relative">
+                    <div class="card-body text-center">
+                        <span th:text="${subscription.type}" 
+                              class="badge bg-primary pricing-badge">Loại gói</span>
+                        
+                              <h4 th:switch="${subscription.type}" class="mt-3">
+                                <span th:case="${T(com.project.userauthservice.entity.payment.Subscription.SubscriptionType).FREE}">Miễn Phí</span>
+                                <span th:case="${T(com.project.userauthservice.entity.payment.Subscription.SubscriptionType).BASIC}">Cơ Bản</span>
+                                <span th:case="${T(com.project.userauthservice.entity.payment.Subscription.SubscriptionType).PREMIUM}">Nâng Cao</span>
+                                <span th:case="*">Doanh Nghiệp</span>
+                            </h4>
+                        
+                        <div class="h2 mt-3">
+                            <span th:text="${#numbers.formatCurrency(subscription.price)}">0 đ</span>
+                            <small class="text-muted">/tháng</small>
+                        </div>
+                        
+                        <ul class="list-unstyled mt-3">
+                            <li>
+                                <i class="fas fa-check text-success me-2"></i>
+                                Tối đa <span th:text="${subscription.maxWorkspaces}">1</span> Workspace
+                            </li>
+                            <li>
+                                <i class="fas fa-check text-success me-2"></i>
+                                Tối đa <span th:text="${subscription.maxMembers}">5</span> Thành Viên
+                            </li>
+                        </ul>
+                        
+                        <p th:text="${subscription.description}" class="text-muted mt-3">
+                            Mô tả gói
+                        </p>
+                        
+                        <button th:if="${subscription.type != T(com.project.userauthservice.entity.payment.Subscription.SubscriptionType).FREE}" 
+                                class="btn btn-upgrade w-100 mt-3" 
+                                data-bs-toggle="modal" 
+                                th:data-bs-target="'#subscriptionModal' + ${subscription.type}">
+                            Nâng Cấp Ngay
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal cho từng loại gói -->
+        <div th:each="subscription : ${subscriptions}" 
+             th:if="${subscription.type != T(com.project.userauthservice.entity.payment.Subscription.SubscriptionType).FREE}"
+             class="modal fade" 
+             th:id="'subscriptionModal' + ${subscription.type}" 
+             tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Thanh Toán Gói <span th:text="${subscription.type}"></span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/subscription/register}" method="post" th:object="${paymentForm}">
+                        <div class="modal-body">
+                            <input type="hidden" th:field="*{subscriptionType}" 
+                                   th:value="${subscription.type}">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Tên chủ thẻ</label>
+                                <input type="text" class="form-control" th:field="*{cardHolderName}" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Số thẻ</label>
+                                <input type="text" class="form-control" th:field="*{cardNumber}" required>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Ngày hết hạn (MM/YY)</label>
+                                    <input type="text" class="form-control" th:field="*{expiryDate}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">CVV</label>
+                                    <input type="text" class="form-control" th:field="*{cvv}" required>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <strong>Tổng thanh toán:</strong> 
+                                <span th:text="${#numbers.formatCurrency(subscription.price)}">0 đ</span>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-primary">Thanh Toán</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

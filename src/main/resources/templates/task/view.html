@@ -1,0 +1,107 @@
+<!-- templates/task/view.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title th:text="${task.title}">Task</title>
+    <style>
+        .task-detail {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .task-status {
+            font-size: 14px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .status-TODO { background: #f0f0f0; color: #666; }
+        .status-IN_PROGRESS { background: #e3f2fd; color: #1976d2; }
+        .status-IN_REVIEW { background: #fff3e0; color: #f57c00; }
+        .status-DONE { background: #e8f5e9; color: #2e7d32; }
+        .status-BLOCKED { background: #ffebee; color: #c62828; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container">
+        <div class="task-detail">
+            <!-- Task Header -->
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h3 th:text="${task.title}">Task Title</h3>
+                    <span class="badge bg-secondary" th:text="${task.taskKey}">PROJ-1-1</span>
+                </div>
+                <span class="task-status" 
+                      th:classappend="${'status-' + task.status}"
+                      th:text="${task.status}">TODO</span>
+            </div>
+
+            <!-- Task Details -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <h5>Mô tả</h5>
+                    <p th:text="${task.description}">Task description</p>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6>Chi tiết</h6>
+                            <div class="mb-2">
+                                <strong>Loại:</strong> <span th:text="${task.type}">TASK</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Độ ưu tiên:</strong> <span th:text="${task.priority}">MEDIUM</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Người tạo:</strong> 
+                                <span th:text="${task.reporter.fullName}">Reporter</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Người thực hiện:</strong> 
+                                <span th:text="${task.assignee?.fullName} ?: 'Chưa gán'">Assignee</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Ngày đến hạn:</strong> 
+                                <span th:text="${task.dueDate} ?: 'Không có'">Due date</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Thời gian ước tính:</strong> 
+                                <span th:text="${task.estimatedHours} ?: '0'">0</span> giờ
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between">
+                <a th:href="@{/projects/{id}(id=${project.id})}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Quay lại dự án
+                </a>
+                <div>
+                    <a th:href="@{/projects/{projectId}/tasks/{id}/edit(projectId=${project.id},id=${task.id})}" 
+                       class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>Chỉnh sửa
+                    </a>
+                    <button class="btn btn-danger" onclick="confirmDelete()">
+                        <i class="fas fa-trash me-2"></i>Xóa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDelete() {
+        if (confirm('Bạn có chắc chắn muốn xóa task này?')) {
+            // Implement delete functionality
+        }
+    }
+</script>
+</body>
+</html>

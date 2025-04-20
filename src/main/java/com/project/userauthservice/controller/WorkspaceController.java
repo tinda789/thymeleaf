@@ -1,10 +1,15 @@
+// controller/WorkspaceController.java
 package com.project.userauthservice.controller;
 
 import com.project.userauthservice.dto.WorkspaceCreateDto;
 import com.project.userauthservice.dto.WorkspaceMemberAddDto;
 import com.project.userauthservice.entity.workspace.Workspace;
 import com.project.userauthservice.entity.workspace.WorkspaceMember;
+import com.project.userauthservice.entity.project.Project;
+import com.project.userauthservice.entity.task.Task;
 import com.project.userauthservice.service.WorkspaceService;
+import com.project.userauthservice.service.ProjectService;
+import com.project.userauthservice.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +29,8 @@ import java.util.List;
 public class WorkspaceController {
 
     private final WorkspaceService workspaceService;
+    private final ProjectService projectService;
+    private final TaskService taskService;
 
     @GetMapping
     public String listWorkspaces(@AuthenticationPrincipal UserDetails userDetails, Model model) {
@@ -61,7 +68,31 @@ public class WorkspaceController {
     public String viewWorkspace(@PathVariable Long id, Model model) {
         try {
             Workspace workspace = workspaceService.getWorkspaceById(id);
+            List<Project> projects = projectService.getProjectsByWorkspace(id);
+            List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(id);
+            
+            // Tính toán số lượng tasks
+            int activeTasks = 0;
+            int completedTasks = 0;
+            
+            for (Project project : projects) {
+                List<Task> tasks = taskService.getTasksByProject(project.getId());
+                for (Task task : tasks) {
+                    if (task.getStatus() == Task.TaskStatus.IN_PROGRESS || 
+                        task.getStatus() == Task.TaskStatus.IN_REVIEW) {
+                        activeTasks++;
+                    } else if (task.getStatus() == Task.TaskStatus.DONE) {
+                        completedTasks++;
+                    }
+                }
+            }
+            
             model.addAttribute("workspace", workspace);
+            model.addAttribute("projects", projects);
+            model.addAttribute("members", members);
+            model.addAttribute("activeTasks", activeTasks);
+            model.addAttribute("completedTasks", completedTasks);
+            
             return "workspace/view";
         } catch (Exception e) {
             model.addAttribute("errorMessage", e.getMessage());

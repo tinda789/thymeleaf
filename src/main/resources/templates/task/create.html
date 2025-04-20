@@ -1,0 +1,191 @@
+<!-- templates/task/create.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title>Tạo task mới</title>
+    <style>
+        .create-form {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .priority-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .priority-LOW { background: #e8f5e9; color: #2e7d32; }
+        .priority-MEDIUM { background: #fff3e0; color: #f57c00; }
+        .priority-HIGH { background: #ffebee; color: #c62828; }
+        .priority-URGENT { background: #f3e5f5; color: #6a1b9a; }
+        
+        .type-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .type-TASK { background: #e3f2fd; color: #1976d2; }
+        .type-BUG { background: #ffebee; color: #c62828; }
+        .type-STORY { background: #e8f5e9; color: #2e7d32; }
+        .type-EPIC { background: #f3e5f5; color: #6a1b9a; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/workspaces}">Workspaces</a></li>
+                <li class="breadcrumb-item">
+                    <a th:href="@{/workspaces/{id}(id=${workspace.id})}" th:text="${workspace.name}">Workspace</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a th:href="@{/workspaces/{wid}/projects/{pid}(wid=${workspace.id},pid=${project.id})}" 
+                       th:text="${project.name}">Project</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Tạo task mới</li>
+            </ol>
+        </nav>
+
+        <div class="create-form">
+            <h3 class="mb-4">Tạo task mới cho dự án: <span th:text="${project.name}"></span></h3>
+            
+            <!-- Alert Messages -->
+            <div th:if="${errorMessage}" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${errorMessage}"></span>
+            </div>
+            
+            <form th:action="@{/workspaces/{wid}/projects/{pid}/tasks/create(wid=${workspace.id},pid=${project.id})}" 
+                  th:object="${task}" method="post">
+                
+                <div class="mb-4">
+                    <label for="title" class="form-label">Tiêu đề <span class="text-danger">*</span></label>
+                    <input type="text" 
+                           class="form-control" 
+                           th:class="${#fields.hasErrors('title')} ? 'form-control is-invalid' : 'form-control'"
+                           id="title" 
+                           th:field="*{title}" 
+                           placeholder="Nhập tiêu đề task" 
+                           required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="description" class="form-label">Mô tả</label>
+                    <textarea class="form-control" 
+                             id="description" 
+                             th:field="*{description}" 
+                             rows="4" 
+                             placeholder="Nhập mô tả task"></textarea>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label for="type" class="form-label">Loại task <span class="text-danger">*</span></label>
+                        <select class="form-select" id="type" th:field="*{type}" required>
+                            <option th:each="type : ${taskTypes}" 
+                                    th:value="${type}" 
+                                    th:text="${type}">TASK</option>
+                        </select>
+                        <div class="mt-2">
+                            <span th:each="type : ${taskTypes}" 
+                                  class="type-badge" 
+                                  th:classappend="${'type-' + type}"
+                                  th:text="${type}">TYPE</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="priority" class="form-label">Độ ưu tiên <span class="text-danger">*</span></label>
+                        <select class="form-select" id="priority" th:field="*{priority}" required>
+                            <option th:each="priority : ${taskPriorities}" 
+                                    th:value="${priority}" 
+                                    th:text="${priority}">MEDIUM</option>
+                        </select>
+                        <div class="mt-2">
+                            <span th:each="priority : ${taskPriorities}" 
+                                  class="priority-badge" 
+                                  th:classappend="${'priority-' + priority}"
+                                  th:text="${priority}">PRIORITY</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="dueDate" class="form-label">Ngày đến hạn</label>
+                        <input type="date" class="form-control" id="dueDate" th:field="*{dueDate}">
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="assigneeId" class="form-label">Người thực hiện</label>
+                        <select class="form-select" id="assigneeId" th:field="*{assigneeId}">
+                            <option value="">Chưa gán</option>
+                            <option th:each="member : ${members}" 
+                                    th:value="${member.user.id}" 
+                                    th:text="${member.user.fullName} + ' (' + ${member.user.email} + ')'">Member</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="estimatedHours" class="form-label">Thời gian ước tính (giờ)</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="estimatedHours" 
+                               th:field="*{estimatedHours}"
+                               min="0"
+                               step="0.5">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a th:href="@{/workspaces/{wid}/projects/{pid}(wid=${workspace.id},pid=${project.id})}" 
+                       class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Quay lại
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Tạo task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cập nhật badge hiển thị khi chọn loại task hoặc priority
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('type');
+        const prioritySelect = document.getElementById('priority');
+        
+        typeSelect.addEventListener('change', function() {
+            updateBadgeHighlight('type', this.value);
+        });
+        
+        prioritySelect.addEventListener('change', function() {
+            updateBadgeHighlight('priority', this.value);
+        });
+        
+        function updateBadgeHighlight(type, value) {
+            const badges = document.querySelectorAll(`.${type}-badge`);
+            badges.forEach(badge => {
+                badge.style.opacity = badge.classList.contains(`${type}-${value}`) ? '1' : '0.5';
+            });
+        }
+        
+        // Khởi tạo trạng thái ban đầu
+        updateBadgeHighlight('type', typeSelect.value);
+        updateBadgeHighlight('priority', prioritySelect.value);
+    });
+</script>
+</body>
+</html>

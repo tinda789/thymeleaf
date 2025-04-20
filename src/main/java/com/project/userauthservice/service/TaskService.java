@@ -1,0 +1,96 @@
+// service/TaskService.java
+package com.project.userauthservice.service;
+
+import com.project.userauthservice.dto.TaskCreateDto;
+import com.project.userauthservice.entity.task.Task;
+import com.project.userauthservice.entity.project.Project;
+import com.project.userauthservice.entity.user.User;
+import com.project.userauthservice.repository.TaskRepository;
+import com.project.userauthservice.repository.ProjectRepository;
+import com.project.userauthservice.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class TaskService {
+    
+    private final TaskRepository taskRepository;
+    private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
+    
+    @Transactional
+    public Task createTask(Long projectId, TaskCreateDto dto, String reporterUsername) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        
+        User reporter = userRepository.findByUsername(reporterUsername)
+                .orElseThrow(() -> new RuntimeException("Reporter not found"));
+        
+        User assignee = null;
+        if (dto.getAssigneeId() != null) {
+            assignee = userRepository.findById(dto.getAssigneeId())
+                    .orElseThrow(() -> new RuntimeException("Assignee not found"));
+        }
+        
+        String taskKey = generateTaskKey(project);
+        
+        Task task = Task.builder()
+                .title(dto.getTitle())
+                .description(dto.getDescription())
+                .taskKey(taskKey)
+                .project(project)
+                .reporter(reporter)
+                .assignee(assignee)
+                .type(dto.getType())
+                .priority(dto.getPriority())
+                .dueDate(dto.getDueDate())
+                .estimatedHours(dto.getEstimatedHours())
+                .status(Task.TaskStatus.TODO)
+                .build();
+        
+        return taskRepository.save(task);
+    }
+    
+    private String generateTaskKey(Project project) {
+        String projectKey = project.getProjectKey();
+        int count = taskRepository.findByProject(project).size();
+        String taskKey;
+        
+        do {
+            count++;
+            taskKey = projectKey + "-" + count;
+        } while (taskRepository.existsByTaskKey(taskKey));
+        
+        return taskKey;
+    }
+    
+    public List<Task> getTasksByProject(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        return taskRepository.findByProject(project);
+    }
+    
+    public Map<Task.TaskStatus, List<Task>> getTasksByProjectGroupedByStatus(Long projectId) {
+        List<Task> tasks = getTasksByProject(projectId);
+        return tasks.stream()
+                .collect(Collectors.groupingBy(Task::getStatus));
+    }
+    
+    public Task getTaskById(Long id) {
+        return taskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+    }
+    
+    @Transactional
+    public Task updateTaskStatus(Long taskId, Task.TaskStatus newStatus) {
+        Task task = getTaskById(taskId);
+        task.setStatus(newStatus);
+        return taskRepository.save(task);
+    }
+}

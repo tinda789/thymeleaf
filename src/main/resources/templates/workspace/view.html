@@ -1,3 +1,4 @@
+<!-- templates/workspace/view.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
@@ -9,26 +10,6 @@
             --workspace-primary: #6366f1;
             --workspace-secondary: #8b5cf6;
             --workspace-light: #f5f3ff;
-        }
-        
-        /* Cập nhật phần global styles */
-        html, body {
-            height: 100%;
-            margin: 0;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f5f7fb;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        
-        .container {
-            flex: 1;
-            padding-bottom: 2rem;
         }
         
         .workspace-header {
@@ -107,7 +88,6 @@
             margin-bottom: 0;
         }
         
-        /* Cập nhật phần card */
         .card {
             border: none;
             border-radius: 12px;
@@ -174,6 +154,33 @@
             letter-spacing: 0.5px;
         }
         
+        .project-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+        
+        .project-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .project-status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .status-ACTIVE { background: #e6f4ea; color: #1a7f37; }
+        .status-COMPLETED { background: #e6f2ff; color: #0366d6; }
+        .status-ON_HOLD { background: #fff8e1; color: #f9a825; }
+        .status-CANCELLED { background: #fce8e6; color: #d93025; }
+        
         .empty-state {
             padding: 2rem;
             text-align: center;
@@ -204,24 +211,6 @@
             border-color: #4f46e5;
             color: white;
         }
-        
-        /* Cập nhật phần layout */
-        .row {
-            display: flex;
-            flex-wrap: wrap;
-        }
-        
-        .col-lg-8, .col-lg-4 {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 992px) {
-            .col-lg-8, .col-lg-4 {
-                margin-bottom: 1.5rem;
-            }
-        }
     </style>
 </head>
 <body>
@@ -245,7 +234,7 @@
         <div class="row mb-4 g-4">
             <div class="col-md-3 col-6">
                 <div class="stats-card">
-                    <h3>0</h3>
+                    <h3 th:text="${#lists.size(projects) ?: 0}">0</h3>
                     <p class="mb-0">Dự án</p>
                 </div>
             </div>
@@ -257,13 +246,13 @@
             </div>
             <div class="col-md-3 col-6">
                 <div class="stats-card">
-                    <h3>0</h3>
+                    <h3 th:text="${activeTasks}">0</h3>
                     <p class="mb-0">Task đang làm</p>
                 </div>
             </div>
             <div class="col-md-3 col-6">
                 <div class="stats-card">
-                    <h3>0</h3>
+                    <h3 th:text="${completedTasks}">0</h3>
                     <p class="mb-0">Task hoàn thành</p>
                 </div>
             </div>
@@ -275,20 +264,45 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Dự án</h5>
-                        <button class="btn btn-workspace btn-sm">
+                        <a th:href="@{/workspaces/{id}/projects/create(id=${workspace.id})}" class="btn btn-workspace btn-sm">
                             <i class="fas fa-plus me-2"></i>Tạo dự án
-                        </button>
+                        </a>
                     </div>
                     <div class="card-body">
-                        <div class="empty-state">
+                        <div th:if="${projects != null && !projects.isEmpty()}">
+                            <div th:each="project : ${projects}" class="project-card">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">
+                                            <a th:href="@{/workspaces/{workspaceId}/projects/{id}(workspaceId=${workspace.id},id=${project.id})}" 
+                                               th:text="${project.name}">Project Name</a>
+                                        </h6>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-secondary me-2" th:text="${project.projectKey}">PROJ-1</span>
+                                            <small class="text-muted" 
+                                                   th:text="${project.tasks != null ? project.tasks.size() + ' tasks' : '0 tasks'}">0 tasks</small>
+                                        </div>
+                                    </div>
+                                    <span class="project-status" 
+                                          th:classappend="${'status-' + project.status}"
+                                          th:text="${project.status}">ACTIVE</span>
+                                </div>
+                            </div>
+                            <div th:if="${projects.size() > 5}" class="text-center mt-3">
+                                <a th:href="@{/workspaces/{id}/projects(id=${workspace.id})}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-list me-2"></i>Xem tất cả dự án
+                                </a>
+                            </div>
+                        </div>
+                        <div th:if="${projects == null || projects.isEmpty()}" class="empty-state">
                             <div class="empty-state-icon">
                                 <i class="fas fa-folder-open"></i>
                             </div>
                             <h5 class="mb-2">Chưa có dự án nào</h5>
                             <p class="text-muted mb-3">Bắt đầu bằng cách tạo dự án đầu tiên của bạn</p>
-                            <button class="btn btn-workspace btn-sm">
+                            <a th:href="@{/workspaces/{id}/projects/create(id=${workspace.id})}" class="btn btn-workspace btn-sm">
                                 <i class="fas fa-plus me-2"></i>Tạo dự án
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -324,7 +338,9 @@
                         </div>
                         
                         <div th:if="${#lists.size(workspace.members) > 5}" class="text-center mt-2">
-                            <a href="#" class="text-primary small">Xem tất cả thành viên</a>
+                            <a th:href="@{/workspaces/{id}/members(id=${workspace.id})}" class="text-primary small">
+                                Xem tất cả thành viên
+                            </a>
                         </div>
                     </div>
                 </div>

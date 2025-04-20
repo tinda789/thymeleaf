@@ -1,0 +1,88 @@
+<!-- templates/project/list.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title th:text="'Dự án - ' + ${workspace.name}">Dự án</title>
+    <style>
+        .project-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .project-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .status-ACTIVE { background: #e6f4ea; color: #1a7f37; }
+        .status-COMPLETED { background: #e6f2ff; color: #0366d6; }
+        .status-ON_HOLD { background: #fff8e1; color: #f9a825; }
+        .status-CANCELLED { background: #fce8e6; color: #d93025; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 th:text="'Dự án trong ' + ${workspace.name}">Dự án</h2>
+            <a th:href="@{/workspaces/{id}/projects/create(id=${workspace.id})}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Tạo dự án mới
+            </a>
+        </div>
+
+        <!-- Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Projects Grid -->
+        <div class="row" th:if="${!projects.isEmpty()}">
+            <div class="col-md-4" th:each="project : ${projects}">
+                <div class="project-card">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="mb-0" th:text="${project.name}">Project Name</h5>
+                        <span class="project-status" 
+                              th:classappend="${'status-' + project.status}"
+                              th:text="${project.status}">ACTIVE</span>
+                    </div>
+                    <p class="text-muted mb-3" th:text="${project.description}">Description</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">
+                            <i class="fas fa-key me-1"></i>
+                            <span th:text="${project.projectKey}">PROJ-1</span>
+                        </span>
+                        <a th:href="@{/workspaces/{workspaceId}/projects/{id}(workspaceId=${workspace.id},id=${project.id})}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-arrow-right me-1"></i>Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${projects.isEmpty()}" class="text-center mt-5">
+            <i class="fas fa-project-diagram fa-4x text-muted mb-3"></i>
+            <h4>Chưa có dự án nào</h4>
+            <p class="text-muted">Tạo dự án đầu tiên để quản lý công việc</p>
+            <a th:href="@{/workspaces/{id}/projects/create(id=${workspace.id})}" class="btn btn-primary mt-3">
+                <i class="fas fa-plus me-2"></i>Tạo dự án mới
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

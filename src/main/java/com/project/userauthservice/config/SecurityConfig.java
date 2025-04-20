@@ -39,44 +39,31 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(
-                    "/",
-                    "/register", 
-                    "/login", 
-                    "/css/**", 
-                    "/js/**", 
-                    "/verify-email",
-                    "/resend-verification",
-                    "/images/**",
-                    "/uploads/**"
-                ).permitAll()
-                .requestMatchers("/dashboard/**").authenticated()
-                .requestMatchers("/profile/**").authenticated()
-                .requestMatchers("/workspaces/**").authenticated()
-                .requestMatchers("/subscription/**").authenticated() 
-                
-
-                .anyRequest().authenticated()
+            .csrf(csrf -> csrf.disable())  // Tắt CSRF nếu ứng dụng không cần bảo vệ CSRF
+            .authorizeRequests(authorizeRequests -> authorizeRequests
+                .requestMatchers("/", "/register", "/login", "/verify-email", "/resend-verification", "/css/**", "/js/**", "/images/**", "/uploads/**")
+                    .permitAll()  // Tất cả mọi người đều có thể truy cập các trang này
+                .requestMatchers("/dashboard/**", "/profile/**", "/workspaces/**", "/subscription/**", "/projects/**", "/tasks/**")
+                    .authenticated()  // Cần phải đăng nhập để truy cập các trang này
+                .anyRequest().authenticated()  // Các yêu cầu còn lại cũng yêu cầu đăng nhập
             )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .loginProcessingUrl("/perform-login")
-                .successHandler(authenticationSuccessHandler)
-                .failureHandler(authenticationFailureHandler)
-                .permitAll()
+            .formLogin(formLogin -> formLogin
+                .loginPage("/login")  // Chỉ định trang login
+                .loginProcessingUrl("/perform-login")  // URL để xử lý đăng nhập
+                .successHandler(authenticationSuccessHandler)  // Xử lý sau khi đăng nhập thành công
+                .failureHandler(authenticationFailureHandler)  // Xử lý khi đăng nhập thất bại
+                .permitAll()  // Cho phép tất cả người dùng truy cập trang login
             )
             .logout(logout -> logout
-                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                .logoutSuccessUrl("/login?logout=true")
-                .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID")
-                .permitAll()
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))  // Cấu hình URL logout
+                .logoutSuccessUrl("/login?logout=true")  // URL khi đăng xuất thành công
+                .invalidateHttpSession(true)  // Hủy session khi đăng xuất
+                .deleteCookies("JSESSIONID")  // Xóa cookie phiên khi đăng xuất
+                .permitAll()  // Cho phép tất cả người dùng thực hiện logout
             )
-            .sessionManagement(session -> session
-                .maximumSessions(1)
-                .expiredUrl("/login?expired=true")
+            .sessionManagement(sessionManagement -> sessionManagement
+                .maximumSessions(1)  // Giới hạn số phiên đăng nhập đồng thời
+                .expiredUrl("/login?expired=true")  // URL khi phiên hết hạn
             );
 
         return http.build();
@@ -85,14 +72,14 @@ public class SecurityConfig {
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder);
-        authProvider.setHideUserNotFoundExceptions(false);
+        authProvider.setUserDetailsService(userDetailsService);  // Cung cấp dịch vụ UserDetails tùy chỉnh
+        authProvider.setPasswordEncoder(passwordEncoder);  // Mã hóa mật khẩu với PasswordEncoder
+        authProvider.setHideUserNotFoundExceptions(false);  // Hiển thị thông báo khi không tìm thấy user
         return authProvider;
     }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+        return config.getAuthenticationManager();  // Cung cấp AuthenticationManager
     }
 }

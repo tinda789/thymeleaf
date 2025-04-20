@@ -1,4 +1,3 @@
-// controller/TaskController.java
 package com.project.userauthservice.controller;
 
 import com.project.userauthservice.dto.TaskCreateDto;
@@ -19,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/workspaces/{workspaceId}/projects/{projectId}/tasks")
@@ -36,9 +37,22 @@ public class TaskController {
         Project project = projectService.getProjectById(projectId);
         List<Task> tasks = taskService.getTasksByProject(projectId);
         
+        // Nhóm tasks theo status
+        Map<String, List<Task>> tasksByStatus = tasks.stream()
+            .collect(Collectors.groupingBy(task -> task.getStatus().name()));
+        
+        // Tính toán thống kê
+        int totalTasks = tasks.size();
+        int doneTasks = tasksByStatus.containsKey("DONE") ? tasksByStatus.get("DONE").size() : 0;
+        double progressPercentage = totalTasks > 0 ? (doneTasks * 100.0 / totalTasks) : 0;
+        
         model.addAttribute("workspace", project.getWorkspace());
         model.addAttribute("project", project);
         model.addAttribute("tasks", tasks);
+        model.addAttribute("tasksByStatus", tasksByStatus);
+        model.addAttribute("totalTasks", totalTasks);
+        model.addAttribute("doneTasks", doneTasks);
+        model.addAttribute("progressPercentage", progressPercentage);
         return "task/list";
     }
 

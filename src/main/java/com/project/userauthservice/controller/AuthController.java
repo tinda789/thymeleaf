@@ -2,6 +2,8 @@ package com.project.userauthservice.controller;
 
 import com.project.userauthservice.dto.UserRegistrationDto;
 import com.project.userauthservice.service.UserService;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -92,8 +94,9 @@ public class AuthController {
         return "redirect:/login";
     }
     
-    @GetMapping("/dashboard")
-    public String dashboard() {
-        return "dashboard";
-    }
+   @GetMapping("/dashboard")
+public String dashboard(HttpServletRequest request, Model model) {
+    model.addAttribute("currentPath", request.getRequestURI());
+    return "dashboard";
+}
 }

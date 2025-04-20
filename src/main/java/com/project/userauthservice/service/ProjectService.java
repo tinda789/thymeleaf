@@ -41,7 +41,6 @@ public class ProjectService {
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
                 .status(Project.ProjectStatus.ACTIVE)
-                .active(true)  // Đảm bảo set giá trị active
                 .build();
         
         return projectRepository.save(project);

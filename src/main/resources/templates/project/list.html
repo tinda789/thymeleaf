@@ -49,21 +49,47 @@
         </div>
 
         <!-- Projects Grid -->
-        <div class="row" th:if="${!projects.isEmpty()}">
+        <div class="row" th:if="${projects != null && !projects.isEmpty()}">
             <div class="col-md-4" th:each="project : ${projects}">
                 <div class="project-card">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h5 class="mb-0" th:text="${project.name}">Project Name</h5>
-                        <span class="project-status" 
-                              th:classappend="${'status-' + project.status}"
-                              th:text="${project.status}">ACTIVE</span>
+                        <div>
+                            <h5 class="mb-0" th:text="${project.name}">Project Name</h5>
+                            <span class="badge bg-secondary mt-1" th:text="${project.projectKey}">PROJ-1</span>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a th:href="@{/workspaces/{workspaceId}/projects/{id}(workspaceId=${workspace.id},id=${project.id})}" 
+                                       class="dropdown-item">
+                                        <i class="fas fa-eye me-2"></i>Xem chi tiết
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form th:action="@{/workspaces/{workspaceId}/projects/{id}/delete(workspaceId=${workspace.id},id=${project.id})}" 
+                                          method="post" 
+                                          style="display: inline;" 
+                                          onsubmit="return confirmDelete();">
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="fas fa-trash me-2"></i>Xóa dự án
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
-                    <p class="text-muted mb-3" th:text="${project.description}">Description</p>
+                    <p class="text-muted mb-3" th:text="${project.description} ?: 'Chưa có mô tả'">Description</p>
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted">
-                            <i class="fas fa-key me-1"></i>
-                            <span th:text="${project.projectKey}">PROJ-1</span>
-                        </span>
+                        <div class="text-muted">
+                            <span class="project-status" 
+                                  th:classappend="${'status-' + project.status}"
+                                  th:text="${project.status}">ACTIVE</span>
+                        </div>
                         <a th:href="@{/workspaces/{workspaceId}/projects/{id}(workspaceId=${workspace.id},id=${project.id})}" 
                            class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-arrow-right me-1"></i>Xem chi tiết
@@ -74,7 +100,7 @@
         </div>
 
         <!-- Empty State -->
-        <div th:if="${projects.isEmpty()}" class="text-center mt-5">
+        <div th:if="${projects == null || projects.isEmpty()}" class="text-center mt-5">
             <i class="fas fa-project-diagram fa-4x text-muted mb-3"></i>
             <h4>Chưa có dự án nào</h4>
             <p class="text-muted">Tạo dự án đầu tiên để quản lý công việc</p>
@@ -84,5 +110,11 @@
         </div>
     </div>
 </div>
+
+<script>
+    function confirmDelete() {
+        return confirm("Bạn có chắc chắn muốn xóa dự án này? Tất cả tasks trong dự án cũng sẽ bị xóa.");
+    }
+</script>
 </body>
 </html>

@@ -118,4 +118,18 @@ public class ProjectController {
         
         return "project/view";
     }
+
+    @PostMapping("/{id}/delete")
+public String deleteProject(@PathVariable Long workspaceId,
+                          @PathVariable Long id,
+                          @AuthenticationPrincipal UserDetails userDetails,
+                          RedirectAttributes redirectAttributes) {
+    try {
+        projectService.deleteProject(id, userDetails.getUsername());
+        redirectAttributes.addFlashAttribute("successMessage", "Đã xóa dự án thành công!");
+    } catch (Exception e) {
+        redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+    }
+    return "redirect:/workspaces/" + workspaceId + "/projects";
+}
 }

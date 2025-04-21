@@ -73,7 +73,16 @@
                             <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Chỉnh sửa dự án</a></li>
                             <li><a class="dropdown-item" href="#"><i class="fas fa-users me-2"></i>Quản lý thành viên</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Xóa dự án</a></li>
+                            <li>
+                                <form th:action="@{/workspaces/{workspaceId}/projects/{id}/delete(workspaceId=${workspace.id},id=${project.id})}" 
+                                      method="post" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirmDeleteProject();">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="fas fa-trash me-2"></i>Xóa dự án
+                                    </button>
+                                </form>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -198,5 +207,10 @@
         </div>
     </div>
 </div>
+<script>
+    function confirmDeleteProject() {
+        return confirm("Bạn có chắc chắn muốn xóa dự án này? Tất cả tasks trong dự án cũng sẽ bị xóa.");
+    }
+</script>
 </body>
 </html>

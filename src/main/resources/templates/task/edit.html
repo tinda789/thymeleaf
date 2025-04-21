@@ -74,6 +74,7 @@
         </nav>
 
         <div class="edit-form">
+            <!-- Hiển thị taskKey trong tiêu đề -->
             <h3 class="mb-4">Chỉnh sửa task: <span th:text="${task.taskKey}"></span></h3>
             
             <!-- Alert Messages -->
@@ -82,6 +83,7 @@
                 <span th:text="${errorMessage}"></span>
             </div>
             
+            <!-- Sử dụng task.id trong form action -->
             <form th:action="@{/workspaces/{wid}/projects/{pid}/tasks/{tid}/edit(wid=${workspace.id},pid=${project.id},tid=${task.id})}" 
                   th:object="${task}" method="post">
                 

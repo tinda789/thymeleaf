@@ -5,9 +5,13 @@ import com.project.userauthservice.dto.TaskUpdateDto;
 import com.project.userauthservice.entity.task.Task;
 import com.project.userauthservice.entity.project.Project;
 import com.project.userauthservice.entity.user.User;
+import com.project.userauthservice.entity.workspace.Workspace;
+import com.project.userauthservice.entity.workspace.WorkspaceMember;
 import com.project.userauthservice.repository.TaskRepository;
 import com.project.userauthservice.repository.ProjectRepository;
 import com.project.userauthservice.repository.UserRepository;
+import com.project.userauthservice.repository.WorkspaceMemberRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +29,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+     private final WorkspaceMemberRepository workspaceMemberRepository;
     
     @Transactional
     public Task createTask(Long projectId, TaskCreateDto dto, String reporterUsername) {
@@ -141,9 +146,24 @@ public class TaskService {
         return taskRepository.save(task);
     }
     
-    @Transactional
-    public void deleteTask(Long taskId) {
-        Task task = getTaskById(taskId);
-        taskRepository.delete(task);
+   @Transactional
+public void deleteTask(Long taskId, String username) {
+    Task task = taskRepository.findById(taskId)
+            .orElseThrow(() -> new RuntimeException("Task not found"));
+    
+    User currentUser = userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+    
+    // Kiểm tra quyền
+    Workspace workspace = task.getProject().getWorkspace();
+    WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(workspace, currentUser)
+            .orElseThrow(() -> new RuntimeException("Bạn không phải là thành viên của workspace này"));
+    
+    if (member.getRole() != WorkspaceMember.WorkspaceRole.OWNER && 
+        member.getRole() != WorkspaceMember.WorkspaceRole.ADMIN) {
+        throw new RuntimeException("Bạn không có quyền xóa task này");
     }
+    
+    taskRepository.delete(task);
+}
 }

@@ -9,6 +9,8 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 @Entity
 @Table(name = "tasks")
 @Getter
@@ -55,6 +57,7 @@ public class Task {
     @Column(nullable = false)
     private TaskType type = TaskType.TASK;
     
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     @Column(name = "due_date")
     private LocalDate dueDate;
     

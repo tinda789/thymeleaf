@@ -137,27 +137,28 @@ public class TaskController {
         List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(workspaceId);
         
         TaskUpdateDto updateDto = new TaskUpdateDto();
+        updateDto.setId(task.getId());  // Set ID cho form action
+        updateDto.setTaskKey(task.getTaskKey());  // Set taskKey để hiển thị
         updateDto.setTitle(task.getTitle());
         updateDto.setDescription(task.getDescription());
         updateDto.setType(task.getType());
         updateDto.setPriority(task.getPriority());
         updateDto.setStatus(task.getStatus());
         updateDto.setDueDate(task.getDueDate());
-
         updateDto.setAssigneeId(task.getAssignee() != null ? task.getAssignee().getId() : null);
         updateDto.setEstimatedHours(task.getEstimatedHours());
         updateDto.setActualHours(task.getActualHours());
-
+        
         model.addAttribute("workspace", project.getWorkspace());
         model.addAttribute("project", project);
-        model.addAttribute("task", task);
+        model.addAttribute("task", updateDto);  // Sử dụng updateDto thay vì task entity
         model.addAttribute("members", members);
         model.addAttribute("taskTypes", Task.TaskType.values());
         model.addAttribute("taskPriorities", Task.TaskPriority.values());
         model.addAttribute("taskStatuses", Task.TaskStatus.values());
+        
         return "task/edit";
     }
-
     @PostMapping("/{id}/edit")
     public String updateTask(@PathVariable Long workspaceId,
                             @PathVariable Long projectId,
@@ -194,9 +195,11 @@ public class TaskController {
     public String deleteTask(@PathVariable Long workspaceId,
                             @PathVariable Long projectId,
                             @PathVariable Long id,
+                            @AuthenticationPrincipal UserDetails userDetails,
                             RedirectAttributes redirectAttributes) {
         try {
-            taskService.deleteTask(id);
+            // Gọi service với username để kiểm tra quyền
+            taskService.deleteTask(id, userDetails.getUsername());
             redirectAttributes.addFlashAttribute("successMessage", "Task đã được xóa thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());

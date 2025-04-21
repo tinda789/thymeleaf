@@ -2,9 +2,16 @@
 package com.project.userauthservice.service;
 
 import com.project.userauthservice.dto.ProjectCreateDto;
+import com.project.userauthservice.entity.user.User;
+import com.project.userauthservice.entity.task.Task;
+
 import com.project.userauthservice.entity.project.Project;
 import com.project.userauthservice.entity.workspace.Workspace;
+import com.project.userauthservice.entity.workspace.WorkspaceMember;
 import com.project.userauthservice.repository.ProjectRepository;
+import com.project.userauthservice.repository.TaskRepository;
+import com.project.userauthservice.repository.UserRepository;
+import com.project.userauthservice.repository.WorkspaceMemberRepository;
 import com.project.userauthservice.repository.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +25,9 @@ public class ProjectService {
     
     private final ProjectRepository projectRepository;
     private final WorkspaceRepository workspaceRepository;
+    private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
     
     @Transactional
     public Project createProject(Long workspaceId, ProjectCreateDto dto) {
@@ -69,4 +79,29 @@ public class ProjectService {
         return projectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
     }
+
+    @Transactional
+public void deleteProject(Long projectId, String username) {
+    Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new RuntimeException("Project not found"));
+    
+    // Kiểm tra quyền xóa (chỉ owner và admin của workspace mới được phép xóa)
+    User currentUser = userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+    
+    WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(project.getWorkspace(), currentUser)
+            .orElseThrow(() -> new RuntimeException("Bạn không phải là thành viên của workspace này"));
+    
+    if (member.getRole() != WorkspaceMember.WorkspaceRole.OWNER && 
+        member.getRole() != WorkspaceMember.WorkspaceRole.ADMIN) {
+        throw new RuntimeException("Bạn không có quyền xóa dự án này");
+    }
+    
+    // Xóa tất cả tasks liên quan trước
+    List<Task> tasks = taskRepository.findByProject(project);
+    taskRepository.deleteAll(tasks);
+    
+    // Xóa project
+    projectRepository.delete(project);
+}
 }

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nâng cấp tài khoản</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div th:replace="fragments/header :: header"></div>
+
+    <div class="container mt-4">
+        <h2 class="mb-4">Nâng cấp tài khoản</h2>
+        
+        <!-- Hiển thị thông báo -->
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        
+        <!-- Thông tin tài khoản hiện tại -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Thông tin tài khoản</h5>
+            </div>
+            <div class="card-body">
+                <p>Cấp độ hiện tại: <span class="badge bg-primary" th:text="${#authentication.principal.accountLevel}"></span></p>
+                <p th:if="${#authentication.principal.accountLevelExpiry != null}">
+                    Hết hạn vào: <span th:text="${#dates.format(#authentication.principal.accountLevelExpiry, 'dd/MM/yyyy HH:mm')}"></span>
+                </p>
+                <p th:unless="${#authentication.principal.accountLevelExpiry != null}">
+                    Tài khoản miễn phí
+                </p>
+            </div>
+        </div>
+        
+        <!-- Danh sách gói nâng cấp -->
+        <div class="row mb-4">
+            <h4 class="mb-3">Các gói nâng cấp</h4>
+            
+            <div th:each="pkg : ${packages}" class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 th:text="${pkg.name}"></h5>
+                    </div>
+                    <div class="card-body">
+                        <p th:text="${pkg.description}"></p>
+                        <p><strong>Giá:</strong> <span th:text="${#numbers.formatDecimal(pkg.price, 0, 'COMMA', 0, 'POINT')}"></span> VNĐ</p>
+                        <p><strong>Thời hạn:</strong> <span th:text="${pkg.durationDays}"></span> ngày</p>
+                        <p><strong>Cấp độ:</strong> <span class="badge" th:classappend="${pkg.level == 'VIP'} ? 'bg-danger' : 
+                                                                                    ${pkg.level == 'PREMIUM'} ? 'bg-warning' : 
+                                                                                    ${pkg.level == 'STANDARD'} ? 'bg-info' : 'bg-secondary'"
+                                                      th:text="${pkg.level}"></span></p>
+                    </div>
+                    <div class="card-footer">
+                        <form th:action="@{/account/upgrade/{id}(id=${pkg.id})}" method="post">
+                            <select name="paymentMethod" class="form-select mb-2" required>
+                                <option value="">Chọn phương thức thanh toán</option>
+                                <option value="VNPAY">VNPAY</option>
+                                <option value="MOMO">MOMO</option>
+                                <option value="BANK_TRANSFER">Chuyển khoản ngân hàng</option>
+                                <option value="CREDIT_CARD">Thẻ tín dụng</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary w-100">Đăng ký ngay</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lịch sử đăng ký -->
+        <div class="card">
+            <div class="card-header">
+                <h5>Lịch sử đăng ký gói</h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${subscriptions.empty}" class="alert alert-info">
+                    Bạn chưa đăng ký gói nào.
+                </div>
+                
+                <table th:unless="${subscriptions.empty}" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Gói</th>
+                            <th>Ngày mua</th>
+                            <th>Hết hạn</th>
+                            <th>Số tiền</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="sub : ${subscriptions}">
+                            <td th:text="${sub.subscriptionPackage.name}"></td>
+                            <td th:text="${#dates.format(sub.purchaseDate, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td th:text="${#dates.format(sub.expiryDate, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td th:text="${#numbers.formatDecimal(sub.amountPaid, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}"></td>
+                            <td>
+                                <span th:switch="${sub.paymentStatus}" class="badge">
+                                    <span th:case="COMPLETED" class="bg-success">Thành công</span>
+                                    <span th:case="PENDING" class="bg-warning">Đang xử lý</span>
+                                    <span th:case="FAILED" class="bg-danger">Thất bại</span>
+                                    <span th:case="REFUNDED" class="bg-secondary">Đã hoàn tiền</span>
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

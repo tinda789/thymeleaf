@@ -83,6 +83,7 @@ public class User {
     public boolean isLocked() {
         return locked;
     }
+    
 
     public enum Gender {
         MALE,

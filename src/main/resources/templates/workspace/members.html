@@ -215,7 +215,7 @@
         </div>
 
         <!-- Add Member Form -->
-        <div class="add-form" th:if="${workspace}">
+        <div class="add-form" th:if="${currentMember != null && (currentMember.role.name() == 'OWNER' || currentMember.role.name() == 'ADMIN')}">
             <h5 class="form-section-title">Thêm thành viên mới</h5>
             <form th:action="@{/workspaces/{id}/members/add(id=${workspace.id})}" th:object="${memberForm}" method="post">
                 <div class="row g-3">
@@ -225,7 +225,7 @@
                                class="form-control" 
                                id="email" 
                                th:field="*{email}"
-                               placeholder="Nhập email thành viên" 
+                               placeholder="Nhập email thành viên"
                                required>
                         <small class="text-muted">Nhập email của người bạn muốn thêm vào workspace</small>
                     </div>

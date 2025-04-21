@@ -118,23 +118,34 @@ public class WorkspaceController {
 
     
     @GetMapping("/{id}/members")
-    public String viewMembers(@PathVariable Long id, Model model) {
-        try {
-            Workspace workspace = workspaceService.getWorkspaceById(id);
-            List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(id);
-            
-            model.addAttribute("workspace", workspace);
-            model.addAttribute("members", members);
-            model.addAttribute("memberForm", new WorkspaceMemberAddDto());
-            model.addAttribute("roles", Arrays.asList(WorkspaceMember.WorkspaceRole.values()));
-            
-            return "workspace/members";
-        } catch (Exception e) {
-            e.printStackTrace();
-            model.addAttribute("errorMessage", "Không thể tải danh sách thành viên: " + e.getMessage());
-            return "error";
-        }
+public String viewMembers(@PathVariable Long id, 
+                           @AuthenticationPrincipal UserDetails userDetails,
+                           Model model) {
+    try {
+        Workspace workspace = workspaceService.getWorkspaceById(id);
+        List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(id);
+        
+        // Lấy thông tin người dùng hiện tại
+        User currentUser = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+        
+        // Tìm thông tin thành viên hiện tại trong workspace
+        WorkspaceMember currentMember = workspaceMemberRepository.findByWorkspaceAndUser(workspace, currentUser)
+                .orElse(null);
+        
+        model.addAttribute("workspace", workspace);
+        model.addAttribute("members", members);
+        model.addAttribute("memberForm", new WorkspaceMemberAddDto());
+        model.addAttribute("roles", Arrays.asList(WorkspaceMember.WorkspaceRole.values()));
+        model.addAttribute("currentMember", currentMember);  // Truyền currentMember vào model
+        
+        return "workspace/members";
+    } catch (Exception e) {
+        e.printStackTrace();
+        model.addAttribute("errorMessage", "Không thể tải danh sách thành viên: " + e.getMessage());
+        return "error";
     }
+}
     
     @PostMapping("/{id}/members/add")
     public String addMember(@PathVariable Long id,

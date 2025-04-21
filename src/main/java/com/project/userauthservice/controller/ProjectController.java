@@ -132,4 +132,6 @@ public String deleteProject(@PathVariable Long workspaceId,
     }
     return "redirect:/workspaces/" + workspaceId + "/projects";
 }
+
+
 }

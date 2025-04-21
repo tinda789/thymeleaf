@@ -93,48 +93,7 @@
                         <i class="fas fa-th-large"></i> Workspaces
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a th:href="@{/projects}" class="nav-link" 
-                       th:classappend="${#strings.startsWith(currentPath, '/projects')} ? 'active' : ''">
-                        <i class="fas fa-project-diagram"></i> Dự án
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/tasks}" class="nav-link" 
-                       th:classappend="${#strings.startsWith(currentPath, '/tasks')} ? 'active' : ''">
-                        <i class="fas fa-tasks"></i> Tasks
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/users}" class="nav-link" 
-                       th:classappend="${#strings.startsWith(currentPath, '/users')} ? 'active' : ''">
-                        <i class="fas fa-users"></i> Quản lý người dùng
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/roles}" class="nav-link" 
-                       th:classappend="${#strings.startsWith(currentPath, '/roles')} ? 'active' : ''">
-                        <i class="fas fa-user-tag"></i> Vai trò
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/permissions}" class="nav-link" 
-                       th:classappend="${#strings.startsWith(currentPath, '/permissions')} ? 'active' : ''">
-                        <i class="fas fa-key"></i> Quyền hạn
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/subscription}" class="nav-link" 
-                       th:classappend="${#strings.startsWith(currentPath, '/subscription')} ? 'active' : ''">
-                        <i class="fas fa-crown"></i> Gói dịch vụ
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/settings}" class="nav-link" 
-                       th:classappend="${#strings.startsWith(currentPath, '/settings')} ? 'active' : ''">
-                        <i class="fas fa-cog"></i> Cài đặt
-                    </a>
-                </li>
+                
             </ul>
         </nav>
 

@@ -11,9 +11,9 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
@@ -26,10 +26,10 @@ public class SecurityConfig {
     private final CustomAuthenticationSuccessHandler authenticationSuccessHandler;
     private final PasswordEncoder passwordEncoder;
 
-    public SecurityConfig(CustomUserDetailsService userDetailsService, 
-                         CustomAuthenticationFailureHandler authenticationFailureHandler,
-                         CustomAuthenticationSuccessHandler authenticationSuccessHandler,
-                         PasswordEncoder passwordEncoder) {
+    public SecurityConfig(CustomUserDetailsService userDetailsService,
+                          CustomAuthenticationFailureHandler authenticationFailureHandler,
+                          CustomAuthenticationSuccessHandler authenticationSuccessHandler,
+                          PasswordEncoder passwordEncoder) {
         this.userDetailsService = userDetailsService;
         this.authenticationFailureHandler = authenticationFailureHandler;
         this.authenticationSuccessHandler = authenticationSuccessHandler;
@@ -39,31 +39,29 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())  // Tắt CSRF nếu ứng dụng không cần bảo vệ CSRF
-            .authorizeRequests(authorizeRequests -> authorizeRequests
-                .requestMatchers("/", "/register", "/login", "/verify-email", "/resend-verification", "/css/**", "/js/**", "/images/**", "/uploads/**")
-                    .permitAll()  // Tất cả mọi người đều có thể truy cập các trang này
-                .requestMatchers("/dashboard/**", "/profile/**", "/workspaces/**", "/subscription/**", "/projects/**", "/tasks/**")
-                    .authenticated()  // Cần phải đăng nhập để truy cập các trang này
-                .anyRequest().authenticated()  // Các yêu cầu còn lại cũng yêu cầu đăng nhập
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/register", "/login", "/verify-email", "/resend-verification", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
+                .requestMatchers("/account/upgrade/**", "/dashboard/**", "/profile/**", "/workspaces/**", "/subscription/**", "/projects/**", "/tasks/**").authenticated()
+                .anyRequest().authenticated()
             )
-            .formLogin(formLogin -> formLogin
-                .loginPage("/login")  // Chỉ định trang login
-                .loginProcessingUrl("/perform-login")  // URL để xử lý đăng nhập
-                .successHandler(authenticationSuccessHandler)  // Xử lý sau khi đăng nhập thành công
-                .failureHandler(authenticationFailureHandler)  // Xử lý khi đăng nhập thất bại
-                .permitAll()  // Cho phép tất cả người dùng truy cập trang login
+            .formLogin(form -> form
+                .loginPage("/login")
+                .loginProcessingUrl("/perform-login")
+                .successHandler(authenticationSuccessHandler)
+                .failureHandler(authenticationFailureHandler)
+                .permitAll()
             )
             .logout(logout -> logout
-                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))  // Cấu hình URL logout
-                .logoutSuccessUrl("/login?logout=true")  // URL khi đăng xuất thành công
-                .invalidateHttpSession(true)  // Hủy session khi đăng xuất
-                .deleteCookies("JSESSIONID")  // Xóa cookie phiên khi đăng xuất
-                .permitAll()  // Cho phép tất cả người dùng thực hiện logout
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                .logoutSuccessUrl("/login?logout=true")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID")
+                .permitAll()
             )
-            .sessionManagement(sessionManagement -> sessionManagement
-                .maximumSessions(1)  // Giới hạn số phiên đăng nhập đồng thời
-                .expiredUrl("/login?expired=true")  // URL khi phiên hết hạn
+            .sessionManagement(session -> session
+                .maximumSessions(1)
+                .expiredUrl("/login?expired=true")
             );
 
         return http.build();
@@ -71,15 +69,15 @@ public class SecurityConfig {
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);  // Cung cấp dịch vụ UserDetails tùy chỉnh
-        authProvider.setPasswordEncoder(passwordEncoder);  // Mã hóa mật khẩu với PasswordEncoder
-        authProvider.setHideUserNotFoundExceptions(false);  // Hiển thị thông báo khi không tìm thấy user
-        return authProvider;
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        provider.setHideUserNotFoundExceptions(false);
+        return provider;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();  // Cung cấp AuthenticationManager
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 }

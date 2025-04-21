@@ -92,4 +92,19 @@ public class Task {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    @Transient // Đánh dấu là không mapping với database
+    public Long getAssigneeId() {
+        return this.assignee != null ? this.assignee.getId() : null;
+    }
+    
+    @Transient // Đánh dấu là không mapping với database
+    public void setAssigneeId(Long assigneeId) {
+        if (assigneeId != null) {
+            // Nếu cần, bạn có thể thêm logic để set assignee từ ID
+            // Ví dụ: this.assignee = userRepository.findById(assigneeId).orElse(null);
+        } else {
+            this.assignee = null;
+        }
+    }
 }

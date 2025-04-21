@@ -74,6 +74,34 @@ public class TaskService {
         return taskKey;
     }
     
+    @Transactional
+    public Task updateTask(Long taskId, TaskUpdateDto dto, String updaterUsername) {
+        Task task = getTaskById(taskId);
+        
+        // Cập nhật thông tin chính của task
+        task.setTitle(dto.getTitle());
+        task.setDescription(dto.getDescription());
+        task.setType(dto.getType());
+        task.setPriority(dto.getPriority());
+        task.setStatus(dto.getStatus());
+        task.setDueDate(dto.getDueDate());
+        
+        // Cập nhật người thực hiện (assignee)
+        if (dto.getAssigneeId() != null) {
+            User assignee = userRepository.findById(dto.getAssigneeId())
+                    .orElseThrow(() -> new RuntimeException("Assignee not found"));
+            task.setAssignee(assignee);
+        } else {
+            task.setAssignee(null);
+        }
+        
+        // Cập nhật thời gian ước tính và thực tế
+        task.setEstimatedHours(dto.getEstimatedHours());
+        task.setActualHours(dto.getActualHours());
+        
+        return taskRepository.save(task);
+    }
+    
     public List<Task> getTasksByProject(Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
@@ -110,30 +138,6 @@ public class TaskService {
     public Task updateTaskStatus(Long taskId, Task.TaskStatus newStatus) {
         Task task = getTaskById(taskId);
         task.setStatus(newStatus);
-        return taskRepository.save(task);
-    }
-    
-    @Transactional
-    public Task updateTask(Long taskId, TaskUpdateDto dto, String updaterUsername) {
-        Task task = getTaskById(taskId);
-        
-        task.setTitle(dto.getTitle());
-        task.setDescription(dto.getDescription());
-        task.setType(dto.getType());
-        task.setPriority(dto.getPriority());
-        task.setStatus(dto.getStatus());
-        task.setDueDate(dto.getDueDate());
-        task.setEstimatedHours(dto.getEstimatedHours());
-        task.setActualHours(dto.getActualHours());
-        
-        if (dto.getAssigneeId() != null) {
-            User assignee = userRepository.findById(dto.getAssigneeId())
-                    .orElseThrow(() -> new RuntimeException("Assignee not found"));
-            task.setAssignee(assignee);
-        } else {
-            task.setAssignee(null);
-        }
-        
         return taskRepository.save(task);
     }
     

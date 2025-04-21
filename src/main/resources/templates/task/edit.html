@@ -158,7 +158,7 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label for="assigneeId" class="form-label">Người thực hiện</label>
-                        <select class="form-select" id="assigneeId" th:field="*{assignee}">
+                        <select class="form-select" id="assigneeId" th:field="*{assigneeId}">
                             <option value="">Chưa gán</option>
                             <option th:each="member : ${members}" 
                                     th:value="${member.user.id}" 

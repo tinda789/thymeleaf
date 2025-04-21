@@ -136,6 +136,18 @@ public class TaskController {
         Project project = projectService.getProjectById(projectId);
         List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(workspaceId);
         
+        TaskUpdateDto updateDto = new TaskUpdateDto();
+        updateDto.setTitle(task.getTitle());
+        updateDto.setDescription(task.getDescription());
+        updateDto.setType(task.getType());
+        updateDto.setPriority(task.getPriority());
+        updateDto.setStatus(task.getStatus());
+        updateDto.setDueDate(task.getDueDate());
+
+        updateDto.setAssigneeId(task.getAssignee() != null ? task.getAssignee().getId() : null);
+        updateDto.setEstimatedHours(task.getEstimatedHours());
+        updateDto.setActualHours(task.getActualHours());
+
         model.addAttribute("workspace", project.getWorkspace());
         model.addAttribute("project", project);
         model.addAttribute("task", task);

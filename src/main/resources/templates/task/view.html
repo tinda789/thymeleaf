@@ -87,35 +87,35 @@
                        class="btn btn-primary">
                         <i class="fas fa-edit me-2"></i>Chỉnh sửa
                     </a>
-                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                        <i class="fas fa-trash me-2"></i>Xóa
-                    </button>
+                    <!-- Nút xóa với form -->
+                    <form th:action="@{/workspaces/{wid}/projects/{pid}/tasks/{tid}/delete(wid=${workspace.id},pid=${project.id},tid=${task.id})}" 
+                          method="post" id="deleteForm" style="display: inline;">
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                            <i class="fas fa-trash me-2"></i>Xóa
+                        </button>
+                    </form>
                 </div>
             </div>
+            
+            <script>
+                function confirmDelete() {
+                    // Hiển thị hộp thoại xác nhận
+                    if (confirm("Bạn có chắc chắn muốn xóa task này?")) {
+                        // Nếu người dùng xác nhận, gửi form
+                        document.getElementById('deleteForm').submit();
+                    }
+                }
+            </script>
+            
+            
+
+
+
         </div>
     </div>
 </div>
 
 <!-- Modal xác nhận xóa -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Xác nhận xóa</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                Bạn có chắc chắn muốn xóa task này?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <form th:action="@{/workspaces/{wid}/projects/{pid}/tasks/{tid}/delete(wid=${workspace.id},pid=${project.id},tid=${task.id})}" 
-                      method="post">
-                    <button type="submit" class="btn btn-danger">Xóa</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+
 </body>
 </html>

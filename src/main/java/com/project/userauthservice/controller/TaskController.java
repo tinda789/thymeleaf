@@ -203,4 +203,18 @@ public class TaskController {
         }
         return "redirect:/workspaces/" + workspaceId + "/projects/" + projectId + "/tasks";
     }
+    @PostMapping("/{id}/update-status")
+    public String updateTaskStatus(@PathVariable Long workspaceId,
+                                   @PathVariable Long projectId,
+                                   @PathVariable Long id,
+                                   @RequestParam Task.TaskStatus newStatus,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            taskService.updateTaskStatus(id, newStatus);
+            redirectAttributes.addFlashAttribute("successMessage", "Trạng thái task đã được cập nhật thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi xảy ra khi cập nhật trạng thái task: " + e.getMessage());
+        }
+        return "redirect:/workspaces/" + workspaceId + "/projects/" + projectId + "/tasks/" + id;
+    }
 }

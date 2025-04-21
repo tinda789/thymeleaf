@@ -1,12 +1,11 @@
-<!-- templates/task/create.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/dashboard-layout}">
 <head>
-    <title>Tạo task mới</title>
+    <title>Chỉnh sửa task</title>
     <style>
-        .create-form {
+        .edit-form {
             background: white;
             border-radius: 10px;
             padding: 30px;
@@ -38,6 +37,19 @@
         .type-BUG { background: #ffebee; color: #c62828; }
         .type-STORY { background: #e8f5e9; color: #2e7d32; }
         .type-EPIC { background: #f3e5f5; color: #6a1b9a; }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .status-TODO { background: #f0f0f0; color: #666; }
+        .status-IN_PROGRESS { background: #e3f2fd; color: #1976d2; }
+        .status-IN_REVIEW { background: #fff3e0; color: #f57c00; }
+        .status-DONE { background: #e8f5e9; color: #2e7d32; }
+        .status-BLOCKED { background: #ffebee; color: #c62828; }
     </style>
 </head>
 <body>
@@ -54,14 +66,23 @@
                     <a th:href="@{/workspaces/{wid}/projects/{pid}(wid=${workspace.id},pid=${project.id})}" 
                        th:text="${project.name}">Project</a>
                 </li>
-                <li class="breadcrumb-item active" aria-current="page">Tạo task mới</li>
+                <li class="breadcrumb-item">
+                    <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks(wid=${workspace.id},pid=${project.id})}">Tasks</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Chỉnh sửa task</li>
             </ol>
         </nav>
 
-        <div class="create-form">
-            <h3 class="mb-4">Tạo task mới cho dự án: <span th:text="${project.name}"></span></h3>
+        <div class="edit-form">
+            <h3 class="mb-4">Chỉnh sửa task: <span th:text="${task.taskKey}"></span></h3>
             
-            <form th:action="@{/workspaces/{wid}/projects/{pid}/tasks/create(wid=${workspace.id},pid=${project.id})}" 
+            <!-- Alert Messages -->
+            <div th:if="${errorMessage}" class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${errorMessage}"></span>
+            </div>
+            
+            <form th:action="@{/workspaces/{wid}/projects/{pid}/tasks/{tid}/edit(wid=${workspace.id},pid=${project.id},tid=${task.id})}" 
                   th:object="${task}" method="post">
                 
                 <div class="mb-4">
@@ -86,7 +107,21 @@
                 </div>
 
                 <div class="row mb-4">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Trạng thái <span class="text-danger">*</span></label>
+                        <select class="form-select" id="status" th:field="*{status}" required>
+                            <option th:each="status : ${taskStatuses}" 
+                                    th:value="${status}" 
+                                    th:text="${status}">STATUS</option>
+                        </select>
+                        <div class="mt-2">
+                            <span th:each="status : ${taskStatuses}" 
+                                  class="status-badge me-1" 
+                                  th:classappend="${'status-' + status}"
+                                  th:text="${status}">STATUS</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
                         <label for="type" class="form-label">Loại task <span class="text-danger">*</span></label>
                         <select class="form-select" id="type" th:field="*{type}" required>
                             <option th:each="type : ${taskTypes}" 
@@ -100,7 +135,7 @@
                                   th:text="${type}">TYPE</span>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="priority" class="form-label">Độ ưu tiên <span class="text-danger">*</span></label>
                         <select class="form-select" id="priority" th:field="*{priority}" required>
                             <option th:each="priority : ${taskPriorities}" 
@@ -114,7 +149,7 @@
                                   th:text="${priority}">PRIORITY</span>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="dueDate" class="form-label">Ngày đến hạn</label>
                         <input type="date" class="form-control" id="dueDate" th:field="*{dueDate}">
                     </div>
@@ -123,7 +158,7 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label for="assigneeId" class="form-label">Người thực hiện</label>
-                        <select class="form-select" id="assigneeId" th:field="*{assigneeId}">
+                        <select class="form-select" id="assigneeId" th:field="*{assignee}">
                             <option value="">Chưa gán</option>
                             <option th:each="member : ${members}" 
                                     th:value="${member.user.id}" 
@@ -141,13 +176,25 @@
                     </div>
                 </div>
 
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="actualHours" class="form-label">Thời gian thực tế (giờ)</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="actualHours" 
+                               th:field="*{actualHours}"
+                               min="0"
+                               step="0.5">
+                    </div>
+                </div>
+
                 <div class="d-flex justify-content-between">
-                    <a th:href="@{/workspaces/{wid}/projects/{pid}(wid=${workspace.id},pid=${project.id})}" 
+                    <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks/{tid}(wid=${workspace.id},pid=${project.id},tid=${task.id})}" 
                        class="btn btn-secondary">
                         <i class="fas fa-arrow-left me-2"></i>Quay lại
                     </a>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Tạo task
+                        <i class="fas fa-save me-2"></i>Lưu thay đổi
                     </button>
                 </div>
             </form>
@@ -160,6 +207,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const typeSelect = document.getElementById('type');
         const prioritySelect = document.getElementById('priority');
+        const statusSelect = document.getElementById('status');
         
         typeSelect.addEventListener('change', function() {
             updateBadgeHighlight('type', this.value);
@@ -167,6 +215,10 @@
         
         prioritySelect.addEventListener('change', function() {
             updateBadgeHighlight('priority', this.value);
+        });
+        
+        statusSelect.addEventListener('change', function() {
+            updateBadgeHighlight('status', this.value);
         });
         
         function updateBadgeHighlight(type, value) {
@@ -179,8 +231,8 @@
         // Khởi tạo trạng thái ban đầu
         updateBadgeHighlight('type', typeSelect.value);
         updateBadgeHighlight('priority', prioritySelect.value);
+        updateBadgeHighlight('status', statusSelect.value);
     });
 </script>
-
 </body>
 </html>

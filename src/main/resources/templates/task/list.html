@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title th:text="'Danh sách Task - ' + ${project.name}">Danh sách Task</title>
+    <style>
+        :root {
+            --task-primary: #667eea;
+            --task-secondary: #764ba2;
+        }
+        
+        .page-header {
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .task-filters {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            margin-bottom: 2rem;
+        }
+        
+        .task-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            margin-bottom: 1rem;
+            border: 1px solid rgba(0,0,0,0.03);
+            transition: all 0.2s ease;
+        }
+        
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .task-status {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-TODO { background: #f0f0f0; color: #666; }
+        .status-IN_PROGRESS { background: #e3f2fd; color: #1976d2; }
+        .status-IN_REVIEW { background: #fff3e0; color: #f57c00; }
+        .status-DONE { background: #e8f5e9; color: #2e7d32; }
+        .status-BLOCKED { background: #ffebee; color: #c62828; }
+        
+        .priority-badge {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        
+        .priority-LOW { background: #e8f5e9; color: #2e7d32; }
+        .priority-MEDIUM { background: #fff3e0; color: #f57c00; }
+        .priority-HIGH { background: #ffebee; color: #c62828; }
+        .priority-URGENT { background: #f3e5f5; color: #6a1b9a; }
+        
+        .type-badge {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        
+        .type-TASK { background: #e3f2fd; color: #1976d2; }
+        .type-BUG { background: #ffebee; color: #c62828; }
+        .type-STORY { background: #e8f5e9; color: #2e7d32; }
+        .type-EPIC { background: #f3e5f5; color: #6a1b9a; }
+        
+        .avatar-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .default-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .stats-card h4 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--task-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-bar {
+            border-radius: 8px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px dashed #e2e8f0;
+        }
+        
+        .empty-state-icon {
+            font-size: 3rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 th:text="'Tasks - ' + ${project.name}">Tasks</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a th:href="@{/workspaces}">Workspaces</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a th:href="@{/workspaces/{id}(id=${workspace.id})}" th:text="${workspace.name}">Workspace</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a th:href="@{/workspaces/{wid}/projects/{pid}(wid=${workspace.id},pid=${project.id})}" th:text="${project.name}">Project</a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">Tasks</li>
+                        </ol>
+                    </nav>
+                </div>
+                <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks/create(wid=${workspace.id},pid=${project.id})}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Tạo task mới
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h4 th:text="${totalTasks}">0</h4>
+                    <p class="mb-0">Tổng số task</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h4 th:text="${doneTasks}">0</h4>
+                    <p class="mb-0">Đã hoàn thành</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h4 th:text="${totalTasks - doneTasks}">0</h4>
+                    <p class="mb-0">Đang thực hiện</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h4 th:text="${#numbers.formatDecimal(progressPercentage, 0, 1) + '%'}">0%</h4>
+                    <p class="mb-0">Tiến độ</p>
+                    <div class="progress mt-2" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             th:style="'width: ' + ${progressPercentage} + '%'"
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task List -->
+        <div th:if="${!tasks.isEmpty()}">
+            <div th:each="task : ${tasks}" class="task-card" 
+                 th:data-status="${task.status}" 
+                 th:data-priority="${task.priority}" 
+                 th:data-type="${task.type}" 
+                 th:data-assignee="${task.assignee?.id ?: 'unassigned'}">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-secondary me-2" th:text="${task.taskKey}">PROJ-1</span>
+                            <span class="task-status" 
+                                  th:classappend="${'status-' + task.status}"
+                                  th:text="${task.status}">TODO</span>
+                        </div>
+                        <h5 class="mb-1">
+                            <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks/{tid}(wid=${workspace.id},pid=${project.id},tid=${task.id})}" 
+                               th:text="${task.title}">Task Title</a>
+                        </h5>
+                        <div class="text-muted" th:text="${task.description} ?: 'Không có mô tả'">Description</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <div th:if="${task.assignee}" class="me-3">
+                                    <img th:if="${task.assignee.avatar != null}" 
+                                         th:src="${'/uploads/avatars/' + task.assignee.avatar}" 
+                                         th:alt="${task.assignee.fullName}"
+                                         class="avatar-img"
+                                         data-bs-toggle="tooltip"
+                                         th:title="${task.assignee.fullName}">
+                                    <span th:unless="${task.assignee.avatar != null}" 
+                                          class="default-avatar"
+                                          data-bs-toggle="tooltip"
+                                          th:title="${task.assignee.fullName}"
+                                          th:text="${#strings.substring(task.assignee.fullName, 0, 1).toUpperCase()}">A</span>
+                                </div>
+                                <div th:unless="${task.assignee}" class="text-muted me-3">
+                                    <i class="fas fa-user-slash me-1"></i>Chưa gán
+                                </div>
+                                <span class="priority-badge me-2" 
+                                      th:classappend="${'priority-' + task.priority}"
+                                      th:text="${task.priority}">MEDIUM</span>
+                                <span class="type-badge" 
+                                      th:classappend="${'type-' + task.type}"
+                                      th:text="${task.type}">TASK</span>
+                            </div>
+                            <div>
+                                <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks/{tid}/edit(wid=${workspace.id},pid=${project.id},tid=${task.id})}" 
+                                   class="btn btn-sm btn-primary me-2">
+                                    <i class="fas fa-edit"></i> Sửa
+                                </a>
+                                <button class="btn btn-sm btn-danger" 
+                                        th:onclick="'confirmDelete(' + ${task.id} + ')'">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${tasks.isEmpty()}" class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <h4>Chưa có task nào</h4>
+            <p class="text-muted">Bắt đầu bằng cách tạo task đầu tiên cho dự án này</p>
+            <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks/create(wid=${workspace.id},pid=${project.id})}" class="btn btn-primary mt-3">
+                <i class="fas fa-plus me-2"></i>Tạo task đầu tiên
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận xóa -->
+<div class="modal fade" id="deleteTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Bạn có chắc chắn muốn xóa task này?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form id="deleteTaskForm" method="post">
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    
+    function confirmDelete(taskId) {
+        var form = document.getElementById('deleteTaskForm');
+        form.action = `/workspaces/${workspace.id}/projects/${project.id}/tasks/${taskId}/delete`;
+        var modal = new bootstrap.Modal(document.getElementById('deleteTaskModal'));
+        modal.show();
+    }
+</script>
+</body>
+</html>

@@ -31,100 +31,12 @@
         .status-ON_HOLD { background: #fff8e1; color: #f9a825; }
         .status-CANCELLED { background: #fce8e6; color: #d93025; }
         
-        .task-board {
-            display: flex;
-            gap: 20px;
-            overflow-x: auto;
-            padding-bottom: 20px;
-        }
-        
-        .task-column {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            min-width: 300px;
-            flex: 1;
-        }
-        
-        .column-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .task-count {
-            background: #e9ecef;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-        }
-        
-        .task-card {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            cursor: move;
-            transition: all 0.3s ease;
-        }
-        
-        .task-card:hover {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-        
-        .avatar-img {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        
-        .priority-badge {
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .priority-LOW { background: #e8f5e9; color: #2e7d32; }
-        .priority-MEDIUM { background: #fff3e0; color: #f57c00; }
-        .priority-HIGH { background: #ffebee; color: #c62828; }
-        .priority-URGENT { background: #f3e5f5; color: #6a1b9a; }
-        
-        .type-badge {
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .type-TASK { background: #e3f2fd; color: #1976d2; }
-        .type-BUG { background: #ffebee; color: #c62828; }
-        .type-STORY { background: #e8f5e9; color: #2e7d32; }
-        .type-EPIC { background: #f3e5f5; color: #6a1b9a; }
-        
         .project-info-card {
             background: white;
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        
-        .default-avatar {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #e9ecef;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            color: #495057;
         }
     </style>
 </head>
@@ -219,222 +131,72 @@
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4>Task Board</h4>
-                    <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks/create(wid=${workspace.id},pid=${project.id})}" 
-                       class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Tạo task mới
-                    </a>
+                    <div>
+                        <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks(wid=${workspace.id},pid=${project.id})}" 
+                           class="btn btn-primary me-2">
+                            <i class="fas fa-list me-2"></i>Xem danh sách task
+                        </a>
+                        <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks/create(wid=${workspace.id},pid=${project.id})}" 
+                           class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>Tạo task mới
+                        </a>
+                    </div>
                 </div>
                 
-                <div class="task-board">
-                    <!-- TODO Column -->
-                    <div class="task-column">
-                        <h5 class="column-header">
-                            <span class="badge bg-secondary">TODO</span>
-                            <span class="task-count" 
-                                  th:text="${#maps.containsKey(tasksByStatus, 'TODO') ? #lists.size(tasksByStatus.get('TODO')) : 0}">0</span>
-                        </h5>
-                        <div id="todo-tasks" class="task-container">
-                            <div th:if="${#maps.containsKey(tasksByStatus, 'TODO') and not #lists.isEmpty(tasksByStatus.get('TODO'))}"
-                                 th:each="task : ${tasksByStatus.get('TODO')}" 
-                                 class="task-card"
-                                 th:attr="data-task-id=${task.id}">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="mb-0">
-                                        <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks/{tid}(wid=${workspace.id},pid=${project.id},tid=${task.id})}" 
-                                           th:text="${task.title}">Task Title</a>
-                                    </h6>
-                                    <span class="priority-badge" 
-                                          th:classappend="${'priority-' + task.priority}"
-                                          th:text="${task.priority}">MEDIUM</span>
+                <!-- Tóm tắt đơn giản về task -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card border-left-primary h-100">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Tổng số task
                                 </div>
-                                <div class="text-muted small mb-2" th:text="${task.taskKey}">PROJ-1</div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div th:if="${task.assignee}">
-                                        <img th:if="${task.assignee.avatar != null}" 
-                                             th:src="${'/uploads/avatars/' + task.assignee.avatar}" 
-                                             th:alt="${task.assignee.fullName}"
-                                             class="avatar-img"
-                                             data-bs-toggle="tooltip"
-                                             th:title="${task.assignee.fullName}">
-                                        <span th:unless="${task.assignee.avatar != null}" 
-                                              class="default-avatar"
-                                              data-bs-toggle="tooltip"
-                                              th:title="${task.assignee.fullName}"
-                                              th:text="${#strings.substring(task.assignee.fullName, 0, 1).toUpperCase()}">A</span>
-                                    </div>
-                                    <div th:unless="${task.assignee}" class="text-muted small">Chưa gán</div>
-                                    <span class="type-badge" 
-                                          th:classappend="${'type-' + task.type}"
-                                          th:text="${task.type}">TASK</span>
-                                </div>
-                            </div>
-                            <div th:if="${not #maps.containsKey(tasksByStatus, 'TODO') or #lists.isEmpty(tasksByStatus.get('TODO'))}" 
-                                 class="text-center text-muted py-3">
-                                Không có task nào
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${totalTasks}">0</div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- IN PROGRESS Column -->
-                    <div class="task-column">
-                        <h5 class="column-header">
-                            <span class="badge bg-primary">IN PROGRESS</span>
-                            <span class="task-count" 
-                                  th:text="${#maps.containsKey(tasksByStatus, 'IN_PROGRESS') ? #lists.size(tasksByStatus.get('IN_PROGRESS')) : 0}">0</span>
-                        </h5>
-                        <div id="inprogress-tasks" class="task-container">
-                            <div th:if="${#maps.containsKey(tasksByStatus, 'IN_PROGRESS') and not #lists.isEmpty(tasksByStatus.get('IN_PROGRESS'))}"
-                                 th:each="task : ${tasksByStatus.get('IN_PROGRESS')}" 
-                                 class="task-card"
-                                 th:attr="data-task-id=${task.id}">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="mb-0">
-                                        <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks/{tid}(wid=${workspace.id},pid=${project.id},tid=${task.id})}" 
-                                           th:text="${task.title}">Task Title</a>
-                                    </h6>
-                                    <span class="priority-badge" 
-                                          th:classappend="${'priority-' + task.priority}"
-                                          th:text="${task.priority}">MEDIUM</span>
+                    <div class="col-md-3">
+                        <div class="card border-left-success h-100">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Đã hoàn thành
                                 </div>
-                                <div class="text-muted small mb-2" th:text="${task.taskKey}">PROJ-1</div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div th:if="${task.assignee}">
-                                        <img th:if="${task.assignee.avatar != null}" 
-                                             th:src="${'/uploads/avatars/' + task.assignee.avatar}" 
-                                             th:alt="${task.assignee.fullName}"
-                                             class="avatar-img"
-                                             data-bs-toggle="tooltip"
-                                             th:title="${task.assignee.fullName}">
-                                        <span th:unless="${task.assignee.avatar != null}" 
-                                              class="default-avatar"
-                                              data-bs-toggle="tooltip"
-                                              th:title="${task.assignee.fullName}"
-                                              th:text="${#strings.substring(task.assignee.fullName, 0, 1).toUpperCase()}">A</span>
-                                    </div>
-                                    <div th:unless="${task.assignee}" class="text-muted small">Chưa gán</div>
-                                    <span class="type-badge" 
-                                          th:classappend="${'type-' + task.type}"
-                                          th:text="${task.type}">TASK</span>
-                                </div>
-                            </div>
-                            <div th:if="${not #maps.containsKey(tasksByStatus, 'IN_PROGRESS') or #lists.isEmpty(tasksByStatus.get('IN_PROGRESS'))}" 
-                                 class="text-center text-muted py-3">
-                                Không có task nào
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${doneTasks}">0</div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- IN REVIEW Column -->
-                    <div class="task-column">
-                        <h5 class="column-header">
-                            <span class="badge bg-warning">IN REVIEW</span>
-                            <span class="task-count" 
-                                  th:text="${#maps.containsKey(tasksByStatus, 'IN_REVIEW') ? #lists.size(tasksByStatus.get('IN_REVIEW')) : 0}">0</span>
-                        </h5>
-                        <div id="review-tasks" class="task-container">
-                            <div th:if="${#maps.containsKey(tasksByStatus, 'IN_REVIEW') and not #lists.isEmpty(tasksByStatus.get('IN_REVIEW'))}"
-                                 th:each="task : ${tasksByStatus.get('IN_REVIEW')}" 
-                                 class="task-card"
-                                 th:attr="data-task-id=${task.id}">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="mb-0">
-                                        <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks/{tid}(wid=${workspace.id},pid=${project.id},tid=${task.id})}" 
-                                           th:text="${task.title}">Task Title</a>
-                                    </h6>
-                                    <span class="priority-badge" 
-                                          th:classappend="${'priority-' + task.priority}"
-                                          th:text="${task.priority}">MEDIUM</span>
+                    <div class="col-md-3">
+                        <div class="card border-left-warning h-100">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Đang thực hiện
                                 </div>
-                                <div class="text-muted small mb-2" th:text="${task.taskKey}">PROJ-1</div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div th:if="${task.assignee}">
-                                        <img th:if="${task.assignee.avatar != null}" 
-                                             th:src="${'/uploads/avatars/' + task.assignee.avatar}" 
-                                             th:alt="${task.assignee.fullName}"
-                                             class="avatar-img"
-                                             data-bs-toggle="tooltip"
-                                             th:title="${task.assignee.fullName}">
-                                        <span th:unless="${task.assignee.avatar != null}" 
-                                              class="default-avatar"
-                                              data-bs-toggle="tooltip"
-                                              th:title="${task.assignee.fullName}"
-                                              th:text="${#strings.substring(task.assignee.fullName, 0, 1).toUpperCase()}">A</span>
-                                    </div>
-                                    <div th:unless="${task.assignee}" class="text-muted small">Chưa gán</div>
-                                    <span class="type-badge" 
-                                          th:classappend="${'type-' + task.type}"
-                                          th:text="${task.type}">TASK</span>
-                                </div>
-                            </div>
-                            <div th:if="${not #maps.containsKey(tasksByStatus, 'IN_REVIEW') or #lists.isEmpty(tasksByStatus.get('IN_REVIEW'))}" 
-                                 class="text-center text-muted py-3">
-                                Không có task nào
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${totalTasks - doneTasks}">0</div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- DONE Column -->
-                    <div class="task-column">
-                        <h5 class="column-header">
-                            <span class="badge bg-success">DONE</span>
-                            <span class="task-count" 
-                                  th:text="${#maps.containsKey(tasksByStatus, 'DONE') ? #lists.size(tasksByStatus.get('DONE')) : 0}">0</span>
-                        </h5>
-                        <div id="done-tasks" class="task-container">
-                            <div th:if="${#maps.containsKey(tasksByStatus, 'DONE') and not #lists.isEmpty(tasksByStatus.get('DONE'))}"
-                                 th:each="task : ${tasksByStatus.get('DONE')}" 
-                                 class="task-card"
-                                 th:attr="data-task-id=${task.id}">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="mb-0">
-                                        <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks/{tid}(wid=${workspace.id},pid=${project.id},tid=${task.id})}" 
-                                           th:text="${task.title}">Task Title</a>
-                                    </h6>
-                                    <span class="priority-badge" 
-                                          th:classappend="${'priority-' + task.priority}"
-                                          th:text="${task.priority}">MEDIUM</span>
+                    <div class="col-md-3">
+                        <div class="card border-left-info h-100">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Tiến độ
                                 </div>
-                                <div class="text-muted small mb-2" th:text="${task.taskKey}">PROJ-1</div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div th:if="${task.assignee}">
-                                        <img th:if="${task.assignee.avatar != null}" 
-                                             th:src="${'/uploads/avatars/' + task.assignee.avatar}" 
-                                             th:alt="${task.assignee.fullName}"
-                                             class="avatar-img"
-                                             data-bs-toggle="tooltip"
-                                             th:title="${task.assignee.fullName}">
-                                        <span th:unless="${task.assignee.avatar != null}" 
-                                              class="default-avatar"
-                                              data-bs-toggle="tooltip"
-                                              th:title="${task.assignee.fullName}"
-                                              th:text="${#strings.substring(task.assignee.fullName, 0, 1).toUpperCase()}">A</span>
-                                    </div>
-                                    <div th:unless="${task.assignee}" class="text-muted small">Chưa gán</div>
-                                    <span class="type-badge" 
-                                          th:classappend="${'type-' + task.type}"
-                                          th:text="${task.type}">TASK</span>
-                                </div>
-                            </div>
-                            <div th:if="${not #maps.containsKey(tasksByStatus, 'DONE') or #lists.isEmpty(tasksByStatus.get('DONE'))}" 
-                                 class="text-center text-muted py-3">
-                                Không có task nào
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${#numbers.formatDecimal(progressPercentage, 0, 1) + '%'}">0%</div>
                             </div>
                         </div>
                     </div>
+                </div>
+                
+                <!-- Link to task list -->
+                <div class="text-center mt-4">
+                    <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks(wid=${workspace.id},pid=${project.id})}" 
+                       class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-tasks me-2"></i>Quản lý chi tiết tasks
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-    // Initialize tooltips
-    document.addEventListener('DOMContentLoaded', function() {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-</script>
 </body>
 </html>

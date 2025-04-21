@@ -1,6 +1,7 @@
 package com.project.userauthservice.controller;
 
 import com.project.userauthservice.dto.TaskCreateDto;
+import com.project.userauthservice.dto.TaskUpdateDto;
 import com.project.userauthservice.entity.task.Task;
 import com.project.userauthservice.entity.project.Project;
 import com.project.userauthservice.entity.workspace.WorkspaceMember;
@@ -118,5 +119,76 @@ public class TaskController {
         model.addAttribute("project", task.getProject());
         model.addAttribute("workspace", task.getProject().getWorkspace());
         return "task/view";
+    }
+    
+    @GetMapping("/{id}/edit")
+    public String editTaskForm(@PathVariable Long workspaceId,
+                              @PathVariable Long projectId, 
+                              @PathVariable Long id, 
+                              Model model) {
+        Task task = taskService.getTaskById(id);
+        
+        // Kiểm tra task có thuộc project này không
+        if (!task.getProject().getId().equals(projectId)) {
+            return "redirect:/workspaces/" + workspaceId + "/projects/" + projectId + "/tasks";
+        }
+        
+        Project project = projectService.getProjectById(projectId);
+        List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(workspaceId);
+        
+        model.addAttribute("workspace", project.getWorkspace());
+        model.addAttribute("project", project);
+        model.addAttribute("task", task);
+        model.addAttribute("members", members);
+        model.addAttribute("taskTypes", Task.TaskType.values());
+        model.addAttribute("taskPriorities", Task.TaskPriority.values());
+        model.addAttribute("taskStatuses", Task.TaskStatus.values());
+        return "task/edit";
+    }
+
+    @PostMapping("/{id}/edit")
+    public String updateTask(@PathVariable Long workspaceId,
+                            @PathVariable Long projectId,
+                            @PathVariable Long id,
+                            @Valid @ModelAttribute("task") TaskUpdateDto dto,
+                            BindingResult result,
+                            @AuthenticationPrincipal UserDetails userDetails,
+                            RedirectAttributes redirectAttributes,
+                            Model model) {
+        if (result.hasErrors()) {
+            Project project = projectService.getProjectById(projectId);
+            List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(workspaceId);
+            
+            model.addAttribute("workspace", project.getWorkspace());
+            model.addAttribute("project", project);
+            model.addAttribute("members", members);
+            model.addAttribute("taskTypes", Task.TaskType.values());
+            model.addAttribute("taskPriorities", Task.TaskPriority.values());
+            model.addAttribute("taskStatuses", Task.TaskStatus.values());
+            return "task/edit";
+        }
+
+        try {
+            Task task = taskService.updateTask(id, dto, userDetails.getUsername());
+            redirectAttributes.addFlashAttribute("successMessage", "Task đã được cập nhật thành công!");
+            return "redirect:/workspaces/" + workspaceId + "/projects/" + projectId + "/tasks/" + id;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/workspaces/" + workspaceId + "/projects/" + projectId + "/tasks/" + id + "/edit";
+        }
+    }
+    
+    @PostMapping("/{id}/delete")
+    public String deleteTask(@PathVariable Long workspaceId,
+                            @PathVariable Long projectId,
+                            @PathVariable Long id,
+                            RedirectAttributes redirectAttributes) {
+        try {
+            taskService.deleteTask(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Task đã được xóa thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/workspaces/" + workspaceId + "/projects/" + projectId + "/tasks";
     }
 }

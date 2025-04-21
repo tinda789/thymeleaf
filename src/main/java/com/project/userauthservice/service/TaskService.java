@@ -1,6 +1,7 @@
 package com.project.userauthservice.service;
 
 import com.project.userauthservice.dto.TaskCreateDto;
+import com.project.userauthservice.dto.TaskUpdateDto;
 import com.project.userauthservice.entity.task.Task;
 import com.project.userauthservice.entity.project.Project;
 import com.project.userauthservice.entity.user.User;
@@ -110,5 +111,35 @@ public class TaskService {
         Task task = getTaskById(taskId);
         task.setStatus(newStatus);
         return taskRepository.save(task);
+    }
+    
+    @Transactional
+    public Task updateTask(Long taskId, TaskUpdateDto dto, String updaterUsername) {
+        Task task = getTaskById(taskId);
+        
+        task.setTitle(dto.getTitle());
+        task.setDescription(dto.getDescription());
+        task.setType(dto.getType());
+        task.setPriority(dto.getPriority());
+        task.setStatus(dto.getStatus());
+        task.setDueDate(dto.getDueDate());
+        task.setEstimatedHours(dto.getEstimatedHours());
+        task.setActualHours(dto.getActualHours());
+        
+        if (dto.getAssigneeId() != null) {
+            User assignee = userRepository.findById(dto.getAssigneeId())
+                    .orElseThrow(() -> new RuntimeException("Assignee not found"));
+            task.setAssignee(assignee);
+        } else {
+            task.setAssignee(null);
+        }
+        
+        return taskRepository.save(task);
+    }
+    
+    @Transactional
+    public void deleteTask(Long taskId) {
+        Task task = getTaskById(taskId);
+        taskRepository.delete(task);
     }
 }

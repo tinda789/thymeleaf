@@ -86,15 +86,35 @@ public class ProjectController {
         // Lấy danh sách task theo status
         Map<Task.TaskStatus, List<Task>> tasksByStatus = taskService.getTasksByProjectGroupedByStatus(id);
         
-        // Debug log
         System.out.println("Total tasks by status map size: " + tasksByStatus.size());
         for (Map.Entry<Task.TaskStatus, List<Task>> entry : tasksByStatus.entrySet()) {
             System.out.println("Status " + entry.getKey() + ": " + entry.getValue().size() + " tasks");
         }
+
+        // Tính toán thống kê
+        int totalTasks = 0;
+        int doneTasks = 0;
         
+        for (List<Task> tasks : tasksByStatus.values()) {
+            totalTasks += tasks.size();
+        }
+        
+        if (tasksByStatus.containsKey(Task.TaskStatus.DONE)) {
+            doneTasks = tasksByStatus.get(Task.TaskStatus.DONE).size();
+        }
+        
+        double progressPercentage = totalTasks > 0 ? (doneTasks * 100.0 / totalTasks) : 0;
+        
+        System.out.println("Total tasks: " + totalTasks);
+        System.out.println("Done tasks: " + doneTasks);
+        System.out.println("Progress: " + progressPercentage);
+
         model.addAttribute("project", project);
         model.addAttribute("workspace", project.getWorkspace());
         model.addAttribute("tasksByStatus", tasksByStatus);
+        model.addAttribute("totalTasks", totalTasks);
+        model.addAttribute("doneTasks", doneTasks);
+        model.addAttribute("progressPercentage", progressPercentage);
         
         return "project/view";
     }

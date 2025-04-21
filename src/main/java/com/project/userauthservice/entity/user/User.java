@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import com.project.userauthservice.entity.user.Genders;
+
 
 @Entity
 @Table(name = "users")
@@ -67,6 +69,9 @@ public class User {
     // Quan hệ với UserRole
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<UserRole> userRoles = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gender_id")
+    private Genders genders;
 
     @PrePersist
     protected void onCreate() {

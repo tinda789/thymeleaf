@@ -109,5 +109,21 @@ public class Task {
         } else {
             this.assignee = null;
         }
+
+        
     }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "status_id", nullable = false)
+    private TaskStatuses statuss;
+    
+    // Thay thế enum TaskPriority bằng quan hệ với entity TaskPriorities
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "priority_id", nullable = false)
+    private TaskPriorities priorityss;
+    
+    // Thay thế enum TaskType bằng quan hệ với entity TaskTypes
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "type_id", nullable = false)
+    private TaskTypes typess;
 }

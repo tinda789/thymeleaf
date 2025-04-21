@@ -34,6 +34,11 @@ public class WorkspaceMember {
 
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id", nullable = false)
+    private WorkspaceRoles roles;
+
 
     public enum WorkspaceRole {
         OWNER,      // Chủ sở hữu workspace

@@ -5,9 +5,15 @@ import com.project.userauthservice.dto.TaskUpdateDto;
 import com.project.userauthservice.entity.task.Task;
 import com.project.userauthservice.entity.project.Project;
 import com.project.userauthservice.entity.workspace.WorkspaceMember;
+import com.project.userauthservice.repository.TaskRepository;
+import com.project.userauthservice.repository.UserRepository;
+import com.project.userauthservice.repository.WorkspaceMemberRepository;
 import com.project.userauthservice.service.TaskService;
 import com.project.userauthservice.service.ProjectService;
 import com.project.userauthservice.service.WorkspaceService;
+import com.project.userauthservice.entity.user.User;
+
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,31 +37,53 @@ public class TaskController {
     private final ProjectService projectService;
     private final WorkspaceService workspaceService;
 
+    private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
+
     @GetMapping
-    public String listTasks(@PathVariable Long workspaceId,
-                           @PathVariable Long projectId, 
-                           Model model) {
-        Project project = projectService.getProjectById(projectId);
-        List<Task> tasks = taskService.getTasksByProject(projectId);
-        
-        // Nhóm tasks theo status
-        Map<String, List<Task>> tasksByStatus = tasks.stream()
-            .collect(Collectors.groupingBy(task -> task.getStatus().name()));
-        
-        // Tính toán thống kê
-        int totalTasks = tasks.size();
-        int doneTasks = tasksByStatus.containsKey("DONE") ? tasksByStatus.get("DONE").size() : 0;
-        double progressPercentage = totalTasks > 0 ? (doneTasks * 100.0 / totalTasks) : 0;
-        
-        model.addAttribute("workspace", project.getWorkspace());
-        model.addAttribute("project", project);
-        model.addAttribute("tasks", tasks);
-        model.addAttribute("tasksByStatus", tasksByStatus);
-        model.addAttribute("totalTasks", totalTasks);
-        model.addAttribute("doneTasks", doneTasks);
-        model.addAttribute("progressPercentage", progressPercentage);
-        return "task/list";
+public String listTasks(@PathVariable Long workspaceId,
+                        @PathVariable Long projectId, 
+                        @AuthenticationPrincipal UserDetails userDetails,
+                        Model model) {
+    Project project = projectService.getProjectById(projectId);
+    
+    // Lấy user hiện tại
+    User currentUser = userRepository.findByUsername(userDetails.getUsername())
+            .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+    
+    // Kiểm tra quyền của user trong workspace
+    WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(project.getWorkspace(), currentUser)
+            .orElseThrow(() -> new RuntimeException("Bạn không phải là thành viên của workspace này"));
+    
+    List<Task> tasks;
+    
+    // Chỉ OWNER và ADMIN mới được xem toàn bộ task
+    if (member.getRole() == WorkspaceMember.WorkspaceRole.OWNER || 
+        member.getRole() == WorkspaceMember.WorkspaceRole.ADMIN) {
+        tasks = taskService.getTasksByProject(projectId);
+    } else {
+        // Member chỉ xem task được giao cho mình
+        tasks = taskRepository.findByProjectAndAssignee(project, currentUser);
     }
+    
+    // Tính toán thống kê
+    int totalTasks = tasks.size();
+    int doneTasks = (int) tasks.stream()
+            .filter(task -> task.getStatus() == Task.TaskStatus.DONE)
+            .count();
+    
+    double progressPercentage = totalTasks > 0 ? (doneTasks * 100.0 / totalTasks) : 0;
+    
+    model.addAttribute("workspace", project.getWorkspace());
+    model.addAttribute("project", project);
+    model.addAttribute("tasks", tasks);
+    model.addAttribute("totalTasks", totalTasks);
+    model.addAttribute("doneTasks", doneTasks);
+    model.addAttribute("progressPercentage", progressPercentage);
+    
+    return "task/list";
+}
 
     @GetMapping("/create")
     public String createTaskForm(@PathVariable Long workspaceId,
@@ -192,20 +220,21 @@ public class TaskController {
     }
     
     @PostMapping("/{id}/delete")
-    public String deleteTask(@PathVariable Long workspaceId,
-                            @PathVariable Long projectId,
-                            @PathVariable Long id,
-                            @AuthenticationPrincipal UserDetails userDetails,
-                            RedirectAttributes redirectAttributes) {
-        try {
-            // Gọi service với username để kiểm tra quyền
-            taskService.deleteTask(id, userDetails.getUsername());
-            redirectAttributes.addFlashAttribute("successMessage", "Task đã được xóa thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-        }
-        return "redirect:/workspaces/" + workspaceId + "/projects/" + projectId + "/tasks";
+public String deleteTask(@PathVariable Long workspaceId,
+                        @PathVariable Long projectId,
+                        @PathVariable Long id,
+                        @AuthenticationPrincipal UserDetails userDetails,
+                        RedirectAttributes redirectAttributes) {
+    try {
+        // Gọi service với username để kiểm tra quyền
+        taskService.deleteTask(id, userDetails.getUsername());
+        redirectAttributes.addFlashAttribute("successMessage", "Task đã được xóa thành công!");
+    } catch (RuntimeException e) {
+        // Nếu không có quyền hoặc có lỗi khác
+        redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
     }
+    return "redirect:/workspaces/" + workspaceId + "/projects/" + projectId + "/tasks";
+}
     @PostMapping("/{id}/update-status")
     public String updateTaskStatus(@PathVariable Long workspaceId,
                                    @PathVariable Long projectId,
@@ -220,4 +249,5 @@ public class TaskController {
         }
         return "redirect:/workspaces/" + workspaceId + "/projects/" + projectId + "/tasks/" + id;
     }
+    
 }

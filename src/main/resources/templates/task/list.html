@@ -135,25 +135,49 @@
 <body>
 <div layout:fragment="content">
     <div class="container">
-        <!-- Page Header -->
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a th:href="@{/workspaces}">Workspaces</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a th:href="@{/workspaces/{id}(id=${workspace.id})}" th:text="${workspace.name}">Workspace</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a th:href="@{/workspaces/{wid}/projects/{pid}(wid=${workspace.id},pid=${project.id})}" th:text="${project.name}">Project</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Tasks</li>
+            </ol>
+        </nav>
+
+        <!-- Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-check-circle me-2"></i>
+                <div>
+                    <strong>Thành công!</strong> 
+                    <span th:text="${successMessage}"></span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+        
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <div>
+                    <strong>Lỗi!</strong> 
+                    <span th:text="${errorMessage}"></span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+
         <div class="page-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h2 th:text="'Tasks - ' + ${project.name}">Tasks</h2>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item">
-                                <a th:href="@{/workspaces}">Workspaces</a>
-                            </li>
-                            <li class="breadcrumb-item">
-                                <a th:href="@{/workspaces/{id}(id=${workspace.id})}" th:text="${workspace.name}">Workspace</a>
-                            </li>
-                            <li class="breadcrumb-item">
-                                <a th:href="@{/workspaces/{wid}/projects/{pid}(wid=${workspace.id},pid=${project.id})}" th:text="${project.name}">Project</a>
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">Tasks</li>
-                        </ol>
-                    </nav>
                 </div>
                 <a th:href="@{/workspaces/{wid}/projects/{pid}/tasks/create(wid=${workspace.id},pid=${project.id})}" class="btn btn-primary">
                     <i class="fas fa-plus me-2"></i>Tạo task mới
@@ -247,14 +271,13 @@
                                     <i class="fas fa-edit"></i> Sửa
                                 </a>
                                 <form th:action="@{/workspaces/{wid}/projects/{pid}/tasks/{tid}/delete(wid=${workspace.id},pid=${project.id},tid=${task.id})}" 
-                                method="post" 
-                                style="display: inline;" 
-                                onsubmit="return confirmDelete();">
-                              <button type="submit" class="btn btn-sm btn-danger">
-                                  <i class="fas fa-trash"></i> Xóa
-                              </button>
-                          </form>
-                          
+                                      method="post" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirmDelete();">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Xóa
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -276,7 +299,6 @@
     </div>
 </div>
 
-
 <script>
     // Initialize tooltips
     document.addEventListener('DOMContentLoaded', function() {
@@ -287,10 +309,8 @@
     });
 
     function confirmDelete() {
-    return confirm("Bạn có chắc chắn muốn xóa công việc này?");
-  }
-    
-    
+        return confirm("Bạn có chắc chắn muốn xóa công việc này?");
+    }
 </script>
 </body>
 </html>

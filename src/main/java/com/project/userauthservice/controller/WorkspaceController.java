@@ -1,4 +1,3 @@
-// controller/WorkspaceController.java
 package com.project.userauthservice.controller;
 
 import com.project.userauthservice.dto.WorkspaceCreateDto;
@@ -7,6 +6,9 @@ import com.project.userauthservice.entity.workspace.Workspace;
 import com.project.userauthservice.entity.workspace.WorkspaceMember;
 import com.project.userauthservice.entity.project.Project;
 import com.project.userauthservice.entity.task.Task;
+import com.project.userauthservice.entity.user.User;
+import com.project.userauthservice.repository.UserRepository;
+import com.project.userauthservice.repository.WorkspaceMemberRepository;
 import com.project.userauthservice.service.WorkspaceService;
 import com.project.userauthservice.service.ProjectService;
 import com.project.userauthservice.service.TaskService;
@@ -31,6 +33,9 @@ public class WorkspaceController {
     private final WorkspaceService workspaceService;
     private final ProjectService projectService;
     private final TaskService taskService;
+
+    private final UserRepository userRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
     @GetMapping
     public String listWorkspaces(@AuthenticationPrincipal UserDetails userDetails, Model model) {
@@ -65,11 +70,21 @@ public class WorkspaceController {
     }
 
     @GetMapping("/{id}")
-    public String viewWorkspace(@PathVariable Long id, Model model) {
+    public String viewWorkspace(@PathVariable Long id, 
+                                @AuthenticationPrincipal UserDetails userDetails,
+                                Model model) {
         try {
+            // Lấy user hiện tại
+            User currentUser = userRepository.findByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+
             Workspace workspace = workspaceService.getWorkspaceById(id);
             List<Project> projects = projectService.getProjectsByWorkspace(id);
             List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(id);
+            
+            // Tìm member hiện tại của workspace
+            WorkspaceMember currentMember = workspaceMemberRepository.findByWorkspaceAndUser(workspace, currentUser)
+                    .orElseThrow(() -> new RuntimeException("Bạn không phải là thành viên của workspace này"));
             
             // Tính toán số lượng tasks
             int activeTasks = 0;
@@ -92,6 +107,7 @@ public class WorkspaceController {
             model.addAttribute("members", members);
             model.addAttribute("activeTasks", activeTasks);
             model.addAttribute("completedTasks", completedTasks);
+            model.addAttribute("currentMember", currentMember);
             
             return "workspace/view";
         } catch (Exception e) {
@@ -99,6 +115,7 @@ public class WorkspaceController {
             return "error";
         }
     }
+
     
     @GetMapping("/{id}/members")
     public String viewMembers(@PathVariable Long id, Model model) {
@@ -152,5 +169,19 @@ public class WorkspaceController {
         }
         
         return "redirect:/workspaces/" + workspaceId + "/members";
+    }
+
+    @PostMapping("/{id}/delete")
+    public String deleteWorkspace(@PathVariable Long id,
+                                 @AuthenticationPrincipal UserDetails userDetails,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            workspaceService.deleteWorkspace(id, userDetails.getUsername());
+            redirectAttributes.addFlashAttribute("successMessage", "Workspace đã được xóa thành công!");
+            return "redirect:/workspaces";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/workspaces/" + id;
+        }
     }
 }

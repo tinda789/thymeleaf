@@ -15,6 +15,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 @Controller
@@ -52,6 +53,16 @@ public class SubscriptionController {
             
             // Khởi tạo giao dịch thanh toán
             PaymentTransaction transaction = subscriptionService.initiatePayment(subscription);
+            
+            // Thêm thông báo nếu có chênh lệch giá
+            if (Math.abs(subscription.getAmountPaid() - subscription.getSubscriptionPackage().getPrice()) > 0.01) {
+                redirectAttributes.addFlashAttribute("infoMessage", 
+                    "Bạn sẽ thanh toán " + 
+                    new DecimalFormat("#,###").format(subscription.getAmountPaid()) + 
+                    " VNĐ để " + 
+                    (subscription.getAmountPaid() > subscription.getSubscriptionPackage().getPrice() ? 
+                    "gia hạn" : "nâng cấp") + " gói.");
+            }
             
             // Chuyển hướng đến trang thanh toán tương ứng
             String redirectUrl;

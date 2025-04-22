@@ -14,5 +14,5 @@ public interface WorkspaceRepository extends JpaRepository<Workspace, Long> {
     List<Workspace> findByOwner(User owner);
     boolean existsByWorkspaceKey(String workspaceKey);
     int countByOwner(User owner);  // Thêm method này
-
+    
 }

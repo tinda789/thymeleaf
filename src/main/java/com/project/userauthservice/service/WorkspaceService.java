@@ -26,7 +26,7 @@ public class WorkspaceService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final UserService userService;
 
-       private final ProjectRepository projectRepository;
+    private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
 
@@ -201,5 +201,53 @@ public class WorkspaceService {
         workspaceRepository.delete(workspace);
     }
 
+    public void validateWorkspaceCreation(User user) {
+        int currentWorkspaceCount = workspaceRepository.countByOwner(user);
+        
+        switch (user.getAccountLevel()) {
+            case FREE:
+                if (currentWorkspaceCount >= 1) {
+                    throw new RuntimeException("Tài khoản miễn phí chỉ được tạo tối đa 1 workspace");
+                }
+                break;
+            case STANDARD:
+                if (currentWorkspaceCount >= 3) {
+                    throw new RuntimeException("Tài khoản Standard chỉ được tạo tối đa 3 workspace");
+                }
+                break;
+            case PREMIUM:
+                if (currentWorkspaceCount >= 10) {
+                    throw new RuntimeException("Tài khoản Premium chỉ được tạo tối đa 10 workspace");
+                }
+                break;
+            case VIP:
+                // Không giới hạn
+                break;
+        }
+    }
     
+    public void validateAddMember(Workspace workspace, User currentUser) {
+        int currentMemberCount = workspaceMemberRepository.countByWorkspace(workspace);
+        
+        switch (currentUser.getAccountLevel()) {
+            case FREE:
+                if (currentMemberCount >= 2) {
+                    throw new RuntimeException("Tài khoản miễn phí chỉ được thêm tối đa 2 thành viên");
+                }
+                break;
+            case STANDARD:
+                if (currentMemberCount >= 5) {
+                    throw new RuntimeException("Tài khoản Standard chỉ được thêm tối đa 5 thành viên");
+                }
+                break;
+            case PREMIUM:
+                if (currentMemberCount >= 20) {
+                    throw new RuntimeException("Tài khoản Premium chỉ được thêm tối đa 20 thành viên");
+                }
+                break;
+            case VIP:
+                // Không giới hạn
+                break;
+        }
+    }
 }

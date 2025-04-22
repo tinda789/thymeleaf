@@ -30,7 +30,8 @@ public class AdminService {
     
     // Quản lý người dùng
     public Page<User> getAllUsers(Pageable pageable) {
-        return userRepository.findAll(pageable);
+        // Loại trừ tài khoản admin khỏi danh sách
+        return userRepository.findByUsernameNot("admin", pageable);
     }
     
     public User getUserById(Long id) {

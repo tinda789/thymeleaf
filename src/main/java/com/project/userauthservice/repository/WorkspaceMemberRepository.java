@@ -12,6 +12,8 @@ import java.util.Optional;
 
 @Repository
 public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember, Long> {
+    int countByWorkspace(Workspace workspace);
+    
     @EntityGraph(attributePaths = {"user", "workspace"})
     List<WorkspaceMember> findByWorkspace(Workspace workspace);
 

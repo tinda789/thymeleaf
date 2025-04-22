@@ -81,7 +81,7 @@ public class ProjectService {
     }
 
     @Transactional
-public void deleteProject(Long projectId, String username) {
+    public void deleteProject(Long projectId, String username) {
     Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new RuntimeException("Project not found"));
     
@@ -104,4 +104,29 @@ public void deleteProject(Long projectId, String username) {
     // Xóa project
     projectRepository.delete(project);
 }
+public void validateProjectCreation(Workspace workspace, User currentUser) {
+    int currentProjectCount = projectRepository.countByWorkspace(workspace);
+    
+    switch (currentUser.getAccountLevel()) {
+        case FREE:
+            if (currentProjectCount >= 1) {
+                throw new RuntimeException("Tài khoản miễn phí chỉ được tạo tối đa 1 dự án");
+            }
+            break;
+        case STANDARD:
+            if (currentProjectCount >= 5) {
+                throw new RuntimeException("Tài khoản Standard chỉ được tạo tối đa 5 dự án");
+            }
+            break;
+        case PREMIUM:
+            if (currentProjectCount >= 20) {
+                throw new RuntimeException("Tài khoản Premium chỉ được tạo tối đa 20 dự án");
+            }
+            break;
+        case VIP:
+            // Không giới hạn
+            break;
+    }
+}
+
 }

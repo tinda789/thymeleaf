@@ -4,9 +4,11 @@ import com.project.userauthservice.dto.ProjectCreateDto;
 import com.project.userauthservice.entity.project.Project;
 import com.project.userauthservice.entity.task.Task;
 import com.project.userauthservice.entity.workspace.Workspace;
+import com.project.userauthservice.entity.user.User;
+import com.project.userauthservice.repository.UserRepository;
 import com.project.userauthservice.service.ProjectService;
-import com.project.userauthservice.service.TaskService;
 import com.project.userauthservice.service.WorkspaceService;
+import com.project.userauthservice.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,10 +26,11 @@ import java.util.Map;
 @RequestMapping("/workspaces/{workspaceId}/projects")
 @RequiredArgsConstructor
 public class ProjectController {
-
+    
     private final ProjectService projectService;
     private final WorkspaceService workspaceService;
     private final TaskService taskService;
+    private final UserRepository userRepository;
 
     @GetMapping
     public String listProjects(@PathVariable Long workspaceId, Model model) {
@@ -40,29 +43,54 @@ public class ProjectController {
     }
 
     @GetMapping("/create")
-    public String createProjectForm(@PathVariable Long workspaceId, Model model) {
-        Workspace workspace = workspaceService.getWorkspaceById(workspaceId);
-        model.addAttribute("workspace", workspace);
-        model.addAttribute("project", new ProjectCreateDto());
-        return "project/create";
+    public String createProjectForm(
+        @PathVariable Long workspaceId, 
+        Model model,
+        @AuthenticationPrincipal UserDetails userDetails,
+        RedirectAttributes redirectAttributes
+    ) {
+        try {
+            User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+            
+            Workspace workspace = workspaceService.getWorkspaceById(workspaceId);
+            
+            // Kiểm tra giới hạn dự án theo loại tài khoản
+            projectService.validateProjectCreation(workspace, user);
+            
+            model.addAttribute("workspace", workspace);
+            model.addAttribute("project", new ProjectCreateDto());
+            return "project/create";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/subscription";
+        }
     }
 
     @PostMapping("/create")
-    public String createProject(@PathVariable Long workspaceId,
-                              @Valid @ModelAttribute("project") ProjectCreateDto dto,
-                              BindingResult result,
-                              @AuthenticationPrincipal UserDetails userDetails,
-                              RedirectAttributes redirectAttributes,
-                              Model model) {
-        
-        // Kiểm tra lỗi validation
-        if (result.hasErrors()) {
-            Workspace workspace = workspaceService.getWorkspaceById(workspaceId);
-            model.addAttribute("workspace", workspace);
-            return "project/create";
-        }
-
+    public String createProject(
+        @PathVariable Long workspaceId,
+        @Valid @ModelAttribute("project") ProjectCreateDto dto,
+        BindingResult result,
+        @AuthenticationPrincipal UserDetails userDetails,
+        RedirectAttributes redirectAttributes,
+        Model model
+    ) {
         try {
+            User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+            
+            Workspace workspace = workspaceService.getWorkspaceById(workspaceId);
+            
+            // Kiểm tra giới hạn dự án theo loại tài khoản
+            projectService.validateProjectCreation(workspace, user);
+            
+            // Kiểm tra lỗi validation
+            if (result.hasErrors()) {
+                model.addAttribute("workspace", workspace);
+                return "project/create";
+            }
+
             Project project = projectService.createProject(workspaceId, dto);
             redirectAttributes.addFlashAttribute("successMessage", "Dự án đã được tạo thành công!");
             return "redirect:/workspaces/" + workspaceId + "/projects/" + project.getId();
@@ -85,11 +113,6 @@ public class ProjectController {
         
         // Lấy danh sách task theo status
         Map<Task.TaskStatus, List<Task>> tasksByStatus = taskService.getTasksByProjectGroupedByStatus(id);
-        
-        System.out.println("Total tasks by status map size: " + tasksByStatus.size());
-        for (Map.Entry<Task.TaskStatus, List<Task>> entry : tasksByStatus.entrySet()) {
-            System.out.println("Status " + entry.getKey() + ": " + entry.getValue().size() + " tasks");
-        }
 
         // Tính toán thống kê
         int totalTasks = 0;
@@ -104,10 +127,6 @@ public class ProjectController {
         }
         
         double progressPercentage = totalTasks > 0 ? (doneTasks * 100.0 / totalTasks) : 0;
-        
-        System.out.println("Total tasks: " + totalTasks);
-        System.out.println("Done tasks: " + doneTasks);
-        System.out.println("Progress: " + progressPercentage);
 
         model.addAttribute("project", project);
         model.addAttribute("workspace", project.getWorkspace());
@@ -120,18 +139,18 @@ public class ProjectController {
     }
 
     @PostMapping("/{id}/delete")
-public String deleteProject(@PathVariable Long workspaceId,
-                          @PathVariable Long id,
-                          @AuthenticationPrincipal UserDetails userDetails,
-                          RedirectAttributes redirectAttributes) {
-    try {
-        projectService.deleteProject(id, userDetails.getUsername());
-        redirectAttributes.addFlashAttribute("successMessage", "Đã xóa dự án thành công!");
-    } catch (Exception e) {
-        redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+    public String deleteProject(
+        @PathVariable Long workspaceId,
+        @PathVariable Long id,
+        @AuthenticationPrincipal UserDetails userDetails,
+        RedirectAttributes redirectAttributes
+    ) {
+        try {
+            projectService.deleteProject(id, userDetails.getUsername());
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xóa dự án thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/workspaces/" + workspaceId + "/projects";
     }
-    return "redirect:/workspaces/" + workspaceId + "/projects";
-}
-
-
 }

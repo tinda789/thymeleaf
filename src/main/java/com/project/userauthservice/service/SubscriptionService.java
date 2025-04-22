@@ -14,7 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,15 +38,73 @@ public class SubscriptionService {
         SubscriptionPackage pkg = packageRepository.findByIdAndActiveTrue(packageId)
                 .orElseThrow(() -> new RuntimeException("Gói dịch vụ không tồn tại hoặc không khả dụng"));
         
+        // Kiểm tra gói đăng ký hiện tại
+        Optional<UserSubscription> existingSubscription = 
+            subscriptionRepository.findByUserAndExpiryDateAfterAndPaymentStatus(
+                user, 
+                LocalDateTime.now(), 
+                UserSubscription.PaymentStatus.COMPLETED
+            );
+        
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiryDate = now.plusDays(pkg.getDurationDays());
+        LocalDateTime expiryDate;
+        double amountPaid = pkg.getPrice();
+        
+        if (existingSubscription.isPresent()) {
+            UserSubscription currentSub = existingSubscription.get();
+            
+            // Nếu là cùng một gói
+            if (currentSub.getSubscriptionPackage().getId().equals(packageId)) {
+                // Cộng thêm thời gian của gói mới vào ngày hết hạn hiện tại
+                expiryDate = currentSub.getExpiryDate().plusDays(pkg.getDurationDays());
+                
+                // Tổng số tiền là tổng của hai gói
+                amountPaid += currentSub.getAmountPaid();
+            } 
+            // Nếu là gói khác
+            else {
+                // Lấy thứ tự các gói
+                List<SubscriptionPackage.AccountLevel> levels = Arrays.asList(
+                    SubscriptionPackage.AccountLevel.FREE,
+                    SubscriptionPackage.AccountLevel.STANDARD,
+                    SubscriptionPackage.AccountLevel.PREMIUM,
+                    SubscriptionPackage.AccountLevel.VIP
+                );
+                
+                int currentIndex = levels.indexOf(currentSub.getSubscriptionPackage().getLevel());
+                int newIndex = levels.indexOf(pkg.getLevel());
+                
+                // Nếu gói mới cao hơn gói hiện tại
+                if (newIndex > currentIndex) {
+                    // Tính số ngày còn lại của gói hiện tại
+                    long remainingDays = ChronoUnit.DAYS.between(LocalDateTime.now(), currentSub.getExpiryDate());
+                    
+                    // Tính giá trị còn lại của gói hiện tại
+                    double remainingValue = (currentSub.getAmountPaid() / currentSub.getSubscriptionPackage().getDurationDays()) * remainingDays;
+                    
+                    // Tổng số tiền sẽ là phần chênh lệch của gói mới
+                    amountPaid = pkg.getPrice() - remainingValue;
+                    
+                    // Đặt ngày hết hạn mới
+                    expiryDate = LocalDateTime.now().plusDays(pkg.getDurationDays());
+                } 
+                // Nếu không được phép nâng cấp
+                else {
+                    throw new RuntimeException("Không thể đăng ký gói này. Vui lòng nâng cấp theo trình tự.");
+                }
+            }
+        } 
+        // Nếu chưa có gói đăng ký
+        else {
+            expiryDate = now.plusDays(pkg.getDurationDays());
+        }
         
         UserSubscription subscription = UserSubscription.builder()
                 .user(user)
                 .subscriptionPackage(pkg)
                 .purchaseDate(now)
                 .expiryDate(expiryDate)
-                .amountPaid(pkg.getPrice())
+                .amountPaid(amountPaid)
                 .paymentStatus(UserSubscription.PaymentStatus.PENDING)
                 .paymentMethod(paymentMethod)
                 .build();

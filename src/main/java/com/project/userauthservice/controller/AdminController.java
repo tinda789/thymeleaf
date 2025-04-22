@@ -74,6 +74,13 @@ public class AdminController {
     
     @PostMapping("/users/{id}/toggle-locked")
     public String toggleUserLocked(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        
+        User user = adminService.getUserById(id);
+        if (user.getUsername().equals("admin")) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể khóa tài khoản admin chính");
+            return "redirect:/admin/users";
+        }
+       
         try {
             adminService.toggleUserLocked(id);
             redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật trạng thái khóa tài khoản");

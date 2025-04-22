@@ -131,7 +131,7 @@
                             <th>Gói đăng ký:</th>
                             <td>
                                 <span class="badge rounded-pill" 
-                                      th:classappend="${
+                                      th:classappend="${user.accountLevel == null ? 'bg-warning' : 
                                           user.accountLevel == T(com.project.userauthservice.entity.subscription.SubscriptionPackage.AccountLevel).FREE ? 'bg-secondary' : 
                                           user.accountLevel == T(com.project.userauthservice.entity.subscription.SubscriptionPackage.AccountLevel).STANDARD ? 'bg-primary' : 
                                           user.accountLevel == T(com.project.userauthservice.entity.subscription.SubscriptionPackage.AccountLevel).PREMIUM ? 'bg-info' : 

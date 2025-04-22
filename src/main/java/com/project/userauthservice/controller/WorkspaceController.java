@@ -12,6 +12,7 @@ import com.project.userauthservice.repository.WorkspaceMemberRepository;
 import com.project.userauthservice.service.WorkspaceService;
 import com.project.userauthservice.service.ProjectService;
 import com.project.userauthservice.service.TaskService;
+import com.project.userauthservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,6 +34,7 @@ public class WorkspaceController {
     private final WorkspaceService workspaceService;
     private final ProjectService projectService;
     private final TaskService taskService;
+    private final UserService userService;
 
     private final UserRepository userRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
@@ -45,21 +47,44 @@ public class WorkspaceController {
     }
 
     @GetMapping("/create")
-    public String createWorkspaceForm(Model model) {
-        model.addAttribute("workspace", new WorkspaceCreateDto());
-        return "workspace/create";
+    public String createWorkspaceForm(
+        Model model, 
+        @AuthenticationPrincipal UserDetails userDetails,
+        RedirectAttributes redirectAttributes
+    ) {
+        try {
+            User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+            
+            // Kiểm tra giới hạn workspace theo loại tài khoản
+            workspaceService.validateWorkspaceCreation(user);
+            
+            model.addAttribute("workspace", new WorkspaceCreateDto());
+            return "workspace/create";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/subscription";
+        }
     }
 
     @PostMapping("/create")
-    public String createWorkspace(@Valid @ModelAttribute("workspace") WorkspaceCreateDto dto,
-                                BindingResult result,
-                                @AuthenticationPrincipal UserDetails userDetails,
-                                RedirectAttributes redirectAttributes) {
+    public String createWorkspace(
+        @Valid @ModelAttribute("workspace") WorkspaceCreateDto dto,
+        BindingResult result,
+        @AuthenticationPrincipal UserDetails userDetails,
+        RedirectAttributes redirectAttributes
+    ) {
         if (result.hasErrors()) {
             return "workspace/create";
         }
 
         try {
+            User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+            
+            // Kiểm tra giới hạn workspace theo loại tài khoản
+            workspaceService.validateWorkspaceCreation(user);
+            
             Workspace workspace = workspaceService.createWorkspace(dto, userDetails.getUsername());
             redirectAttributes.addFlashAttribute("successMessage", "Workspace đã được tạo thành công!");
             return "redirect:/workspaces/" + workspace.getId();
@@ -116,48 +141,51 @@ public class WorkspaceController {
         }
     }
 
-    
     @GetMapping("/{id}/members")
-public String viewMembers(@PathVariable Long id, 
-                           @AuthenticationPrincipal UserDetails userDetails,
-                           Model model) {
-    try {
-        Workspace workspace = workspaceService.getWorkspaceById(id);
-        List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(id);
-        
-        // Lấy thông tin người dùng hiện tại
-        User currentUser = userRepository.findByUsername(userDetails.getUsername())
+    public String viewMembers(@PathVariable Long id, 
+                               @AuthenticationPrincipal UserDetails userDetails,
+                               Model model) {
+        try {
+            User currentUser = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
-        
-        // Tìm thông tin thành viên hiện tại trong workspace
-        WorkspaceMember currentMember = workspaceMemberRepository.findByWorkspaceAndUser(workspace, currentUser)
+            
+            Workspace workspace = workspaceService.getWorkspaceById(id);
+            List<WorkspaceMember> members = workspaceService.getWorkspaceMembers(id);
+            
+            WorkspaceMember currentMember = workspaceMemberRepository.findByWorkspaceAndUser(workspace, currentUser)
                 .orElse(null);
-        
-        model.addAttribute("workspace", workspace);
-        model.addAttribute("members", members);
-        model.addAttribute("memberForm", new WorkspaceMemberAddDto());
-        model.addAttribute("roles", Arrays.asList(WorkspaceMember.WorkspaceRole.values()));
-        model.addAttribute("currentMember", currentMember);  // Truyền currentMember vào model
-        
-        return "workspace/members";
-    } catch (Exception e) {
-        e.printStackTrace();
-        model.addAttribute("errorMessage", "Không thể tải danh sách thành viên: " + e.getMessage());
-        return "error";
+            
+            model.addAttribute("workspace", workspace);
+            model.addAttribute("members", members);
+            model.addAttribute("memberForm", new WorkspaceMemberAddDto());
+            model.addAttribute("roles", Arrays.asList(WorkspaceMember.WorkspaceRole.values()));
+            model.addAttribute("currentMember", currentMember);
+            
+            return "workspace/members";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("errorMessage", "Không thể tải danh sách thành viên: " + e.getMessage());
+            return "error";
+        }
     }
-}
     
     @PostMapping("/{id}/members/add")
-    public String addMember(@PathVariable Long id,
-                           @Valid @ModelAttribute("memberForm") WorkspaceMemberAddDto dto,
-                           BindingResult result,
-                           @AuthenticationPrincipal UserDetails userDetails,
-                           RedirectAttributes redirectAttributes) {
-        if (result.hasErrors()) {
-            return "workspace/members";
-        }
-        
+    public String addMember(
+        @PathVariable Long id,
+        @Valid @ModelAttribute("memberForm") WorkspaceMemberAddDto dto,
+        BindingResult result,
+        @AuthenticationPrincipal UserDetails userDetails,
+        RedirectAttributes redirectAttributes
+    ) {
         try {
+            User currentUser = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+            
+            Workspace workspace = workspaceService.getWorkspaceById(id);
+            
+            // Kiểm tra giới hạn thành viên theo loại tài khoản
+            workspaceService.validateAddMember(workspace, currentUser);
+            
             workspaceService.addMemberByEmail(id, dto.getEmail(), dto.getRole(), userDetails.getUsername());
             redirectAttributes.addFlashAttribute("successMessage", "Đã thêm thành viên thành công!");
         } catch (Exception e) {

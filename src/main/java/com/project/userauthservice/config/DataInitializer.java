@@ -39,11 +39,6 @@ public class DataInitializer {
             createRoleIfNotExists("ROLE_ADMIN", "Administrator", Role.ScopeType.GLOBAL);
             createRoleIfNotExists("ROLE_USER", "Regular User", Role.ScopeType.GLOBAL);
             
-            // Create project roles
-            createRoleIfNotExists("PROJECT_ADMIN", "Project Administrator", Role.ScopeType.PROJECT);
-            createRoleIfNotExists("PROJECT_MANAGER", "Project Manager", Role.ScopeType.PROJECT);
-            createRoleIfNotExists("DEVELOPER", "Developer", Role.ScopeType.PROJECT);
-            createRoleIfNotExists("TESTER", "Tester", Role.ScopeType.PROJECT);
         }
     }
     

@@ -85,6 +85,24 @@ public class AdminService {
                 .orElseThrow(() -> new RuntimeException("Giao dịch không tồn tại"));
     }
     
+    // Xóa giao dịch cũ đang chờ xử lý
+    @Transactional
+    public int clearPendingTransactions() {
+        // Tìm tất cả giao dịch PENDING cũ (trên 1 ngày)
+        LocalDateTime oneDayAgo = LocalDateTime.now().minusDays(1);
+        List<PaymentTransaction> oldPendingTransactions = transactionRepository.findByStatusAndTransactionDateBefore(
+                PaymentTransaction.TransactionStatus.PENDING, 
+                oneDayAgo
+        );
+        
+        // Xóa các giao dịch đó
+        if (!oldPendingTransactions.isEmpty()) {
+            transactionRepository.deleteAll(oldPendingTransactions);
+        }
+        
+        return oldPendingTransactions.size();
+    }
+    
     // Thống kê doanh thu
     public Map<String, Object> getRevenueStats() {
         Map<String, Object> stats = new HashMap<>();

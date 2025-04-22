@@ -7,6 +7,7 @@ import com.project.userauthservice.entity.user.User;
 import com.project.userauthservice.service.PaymentService;
 import com.project.userauthservice.service.SubscriptionService;
 import com.project.userauthservice.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -44,7 +45,8 @@ public class SubscriptionController {
     public String subscribeToPackage(@PathVariable Long packageId,
                                    @RequestParam UserSubscription.PaymentMethod paymentMethod,
                                    @AuthenticationPrincipal UserDetails userDetails,
-                                   RedirectAttributes redirectAttributes) {
+                                   RedirectAttributes redirectAttributes,
+                                   Model model) {
         try {
             User user = userService.findByUsername(userDetails.getUsername());
             
@@ -68,21 +70,32 @@ public class SubscriptionController {
             String redirectUrl;
             switch (paymentMethod) {
                 case VNPAY:
+                    // Lấy URL thanh toán VNPay
                     redirectUrl = paymentService.processVNPayPayment(transaction);
-                    return "redirect:" + redirectUrl;
+                    
+                    // Sử dụng trang chuyển hướng trung gian
+                    model.addAttribute("paymentUrl", redirectUrl);
+                    model.addAttribute("amount", transaction.getAmount());
+                    model.addAttribute("packageName", subscription.getSubscriptionPackage().getName());
+                    model.addAttribute("transactionId", transaction.getTransactionId());
+                    return "subscription/direct-vnpay";
+                    
                 case MOMO:
                     redirectUrl = paymentService.processMoMoPayment(transaction);
                     return "redirect:" + redirectUrl;
+                    
                 case BANK_TRANSFER:
                     // Hiển thị thông tin chuyển khoản
                     String bankInfo = paymentService.processBankTransfer(transaction);
                     redirectAttributes.addFlashAttribute("bankInfo", bankInfo);
                     redirectAttributes.addFlashAttribute("transactionId", transaction.getTransactionId());
                     return "redirect:/subscription/bank-transfer";
+                    
                 case CREDIT_CARD:
                     // Hiển thị form nhập thông tin thẻ
                     redirectUrl = paymentService.processCreditCard(transaction);
                     return "redirect:" + redirectUrl;
+                    
                 default:
                     redirectAttributes.addFlashAttribute("errorMessage", "Phương thức thanh toán không hợp lệ");
                     return "redirect:/subscription";
@@ -119,20 +132,40 @@ public class SubscriptionController {
     }
     
     @GetMapping("/vnpay-callback")
-    public String handleVNPayCallback(@RequestParam String vnp_TxnRef,
-                                     @RequestParam String vnp_ResponseCode,
-                                     RedirectAttributes redirectAttributes) {
-        boolean success = "00".equals(vnp_ResponseCode);
+    public String handleVNPayCallback(
+            @RequestParam(required = false) String vnp_TxnRef,
+            @RequestParam(required = false) String vnp_ResponseCode,
+            @RequestParam(required = false) String vnp_SecureHash,
+            HttpServletRequest request,
+            Model model) {
         
-        paymentService.handlePaymentCallback(vnp_TxnRef, success);
-        
-        if (success) {
-            redirectAttributes.addFlashAttribute("successMessage", "Thanh toán thành công!");
-        } else {
-            redirectAttributes.addFlashAttribute("errorMessage", "Thanh toán thất bại!");
+        // Kiểm tra có đủ tham số không
+        if (vnp_TxnRef == null || vnp_ResponseCode == null) {
+            model.addAttribute("success", false);
+            model.addAttribute("errorMessage", "Thiếu tham số từ VNPAY");
+            return "subscription/payment-result";
         }
         
-        return "redirect:/subscription";
+        // Kiểm tra mã giao dịch hợp lệ
+        boolean success = "00".equals(vnp_ResponseCode);
+        
+        // Xử lý kết quả thanh toán
+        try {
+            paymentService.handlePaymentCallback(vnp_TxnRef, success);
+            
+            model.addAttribute("success", success);
+            model.addAttribute("transactionId", vnp_TxnRef);
+            model.addAttribute("vnpResponseCode", vnp_ResponseCode);
+            
+            if (!success) {
+                model.addAttribute("errorMessage", "Thanh toán thất bại! Mã lỗi: " + vnp_ResponseCode);
+            }
+        } catch (Exception e) {
+            model.addAttribute("success", false);
+            model.addAttribute("errorMessage", "Lỗi xử lý giao dịch: " + e.getMessage());
+        }
+        
+        return "subscription/payment-result";
     }
     
     @GetMapping("/momo-callback")

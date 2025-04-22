@@ -18,7 +18,14 @@
             </div>
         </form>
     </div>
-    
+    <div class="mb-3">
+        <form th:action="@{/admin/transactions/clear-pending}" method="post" style="display: inline;">
+            <button type="submit" class="btn btn-warning" 
+                    onclick="return confirm('Bạn có chắc chắn muốn xóa tất cả giao dịch đang chờ cũ?')">
+                <i class="fas fa-broom me-2"></i>Xóa giao dịch chờ cũ
+            </button>
+        </form>
+    </div>
     <!-- Alert Messages -->
     <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show">
         <i class="fas fa-check-circle me-2"></i>

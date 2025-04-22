@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title>Thanh toán qua VNPAY</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container py-5">
+        <div class="card">
+            <div class="card-body text-center">
+                <h2 class="mb-4">Chuyển hướng đến thanh toán VNPAY</h2>
+                <p>Nhấn vào nút bên dưới để tiếp tục thanh toán:</p>
+                
+                <div class="mb-4 p-3 bg-light rounded">
+                    <p><strong>Số tiền:</strong> <span th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">100,000 VNĐ</span></p>
+                    <p><strong>Nội dung:</strong> <span th:text="${packageName}">Gói Premium</span></p>
+                    <p><strong>Mã giao dịch:</strong> <span th:text="${transactionId}">TXN123456</span></p>
+                </div>
+                
+                <a th:href="${paymentUrl}" target="_blank" class="btn btn-primary btn-lg">
+                    <i class="fas fa-external-link-alt me-2"></i>Đi đến cổng thanh toán VNPAY
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

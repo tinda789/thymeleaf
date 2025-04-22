@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title>Đang chuyển hướng đến cổng thanh toán</title>
+    <style>
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 20px;
+        }
+        .loading-spinner {
+            width: 4rem;
+            height: 4rem;
+            margin-bottom: 2rem;
+        }
+        .payment-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container">
+        <div class="card">
+            <div class="card-body loading-container">
+                <div class="spinner-border loading-spinner text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h4>Đang chuyển hướng đến cổng thanh toán VNPAY</h4>
+                <p>Vui lòng không đóng trình duyệt. Bạn sẽ được chuyển đến cổng thanh toán trong giây lát...</p>
+                
+                <div class="payment-info">
+                    <h5 class="mb-3">Thông tin thanh toán</h5>
+                    <p><strong>Số tiền:</strong> <span th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">100,000 VNĐ</span></p>
+                    <p><strong>Nội dung:</strong> <span th:text="${packageName}">Gói Premium</span></p>
+                    <p class="mb-0"><strong>Mã giao dịch:</strong> <span th:text="${transactionId}">TXN123456</span></p>
+                </div>
+                
+                <a href="#" id="manualRedirect" class="btn btn-primary mt-4">Nhấn vào đây nếu không được chuyển hướng tự động</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // Lấy URL thanh toán từ biến Thymeleaf
+    const paymentUrl = /*[[${paymentUrl}]]*/ '';
+    
+    // Hiển thị URL trong console để debug
+    console.log("Payment URL: " + paymentUrl);
+    
+    // Chuyển hướng ngay lập tức thay vì chờ 3 giây
+    window.location.href = paymentUrl;
+    
+    // Nút chuyển hướng thủ công - làm cho nó rõ ràng hơn
+    document.getElementById('manualRedirect').addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log("Manual redirect to: " + paymentUrl);
+        window.open(paymentUrl, '_blank');
+    });
+</script>
+</body>
+</html>

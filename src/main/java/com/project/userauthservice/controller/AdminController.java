@@ -180,6 +180,17 @@ public class AdminController {
         return "redirect:/admin/transactions";
     }
     
+    @PostMapping("/transactions/clear-pending")
+    public String clearPendingTransactions(RedirectAttributes redirectAttributes) {
+        try {
+            int count = adminService.clearPendingTransactions();
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xóa " + count + " giao dịch đang chờ cũ");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/transactions";
+    }
+    
     // Cài đặt hệ thống
     @GetMapping("/settings")
     public String showSettings(Model model) {

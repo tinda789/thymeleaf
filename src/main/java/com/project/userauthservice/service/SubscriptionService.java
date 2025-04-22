@@ -53,49 +53,44 @@ public class SubscriptionService {
         if (existingSubscription.isPresent()) {
             UserSubscription currentSub = existingSubscription.get();
             
-            // Nếu là cùng một gói
-            if (currentSub.getSubscriptionPackage().getId().equals(packageId)) {
-                // Cộng thêm thời gian của gói mới vào ngày hết hạn hiện tại
-                expiryDate = currentSub.getExpiryDate().plusDays(pkg.getDurationDays());
+            // Lấy thứ tự các gói
+            List<SubscriptionPackage.AccountLevel> levels = Arrays.asList(
+                SubscriptionPackage.AccountLevel.FREE,
+                SubscriptionPackage.AccountLevel.STANDARD,
+                SubscriptionPackage.AccountLevel.PREMIUM,
+                SubscriptionPackage.AccountLevel.VIP
+            );
+            
+            int currentIndex = levels.indexOf(currentSub.getSubscriptionPackage().getLevel());
+            int newIndex = levels.indexOf(pkg.getLevel());
+            
+            // Nếu gói mới cao hơn gói hiện tại hoặc là gia hạn gói cũ
+            if (newIndex >= currentIndex) {
+                // Tính số ngày còn lại của gói hiện tại
+                long remainingDays = ChronoUnit.DAYS.between(LocalDateTime.now(), currentSub.getExpiryDate());
                 
-                // Tổng số tiền là tổng của hai gói
-                amountPaid += currentSub.getAmountPaid();
-            } 
-            // Nếu là gói khác
-            else {
-                // Lấy thứ tự các gói
-                List<SubscriptionPackage.AccountLevel> levels = Arrays.asList(
-                    SubscriptionPackage.AccountLevel.FREE,
-                    SubscriptionPackage.AccountLevel.STANDARD,
-                    SubscriptionPackage.AccountLevel.PREMIUM,
-                    SubscriptionPackage.AccountLevel.VIP
-                );
-                
-                int currentIndex = levels.indexOf(currentSub.getSubscriptionPackage().getLevel());
-                int newIndex = levels.indexOf(pkg.getLevel());
-                
-                // Nếu gói mới cao hơn gói hiện tại
-                if (newIndex > currentIndex) {
-                    // Tính số ngày còn lại của gói hiện tại
-                    long remainingDays = ChronoUnit.DAYS.between(LocalDateTime.now(), currentSub.getExpiryDate());
+                if (pkg.getId().equals(currentSub.getSubscriptionPackage().getId())) {
+                    // Nếu là gia hạn cùng gói, cộng thêm thời gian
+                    expiryDate = currentSub.getExpiryDate().plusDays(pkg.getDurationDays());
+                } else {
+                    // Nếu nâng cấp gói mới cao hơn
+                    // Tính giá trị còn lại của gói hiện tại để khấu trừ
+                    double remainingValue = remainingDays > 0 ?
+                        (currentSub.getAmountPaid() / currentSub.getSubscriptionPackage().getDurationDays()) * remainingDays : 0;
                     
-                    // Tính giá trị còn lại của gói hiện tại
-                    double remainingValue = (currentSub.getAmountPaid() / currentSub.getSubscriptionPackage().getDurationDays()) * remainingDays;
-                    
-                    // Tổng số tiền sẽ là phần chênh lệch của gói mới
+                    // Tổng số tiền sẽ là giá gói mới trừ đi giá trị còn lại
                     amountPaid = pkg.getPrice() - remainingValue;
+                    if (amountPaid < 0) amountPaid = 0; // Đảm bảo không bị âm
                     
                     // Đặt ngày hết hạn mới
                     expiryDate = LocalDateTime.now().plusDays(pkg.getDurationDays());
-                } 
-                // Nếu không được phép nâng cấp
-                else {
-                    throw new RuntimeException("Không thể đăng ký gói này. Vui lòng nâng cấp theo trình tự.");
                 }
+            } else {
+                // Không cho phép hạ cấp gói
+                throw new RuntimeException("Không thể đăng ký gói thấp hơn. Vui lòng chờ hết hạn gói hiện tại.");
             }
-        } 
-        // Nếu chưa có gói đăng ký
-        else {
+        } else {
+            // Nếu chưa có gói đăng ký
             expiryDate = now.plusDays(pkg.getDurationDays());
         }
         

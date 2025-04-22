@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title>Kết quả thanh toán</title>
+    <style>
+        .result-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .result-icon {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+        }
+        .success-icon {
+            color: #10b981;
+        }
+        .error-icon {
+            color: #ef4444;
+        }
+        .result-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .transaction-details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container">
+        <div class="result-card">
+            <div class="result-container">
+                <!-- Success -->
+                <div th:if="${success}" class="mb-4">
+                    <div class="result-icon success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h2>Thanh toán thành công!</h2>
+                    <p>Giao dịch của bạn đã được xử lý thành công.</p>
+                </div>
+                
+                <!-- Error -->
+                <div th:unless="${success}" class="mb-4">
+                    <div class="result-icon error-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <h2>Thanh toán thất bại</h2>
+                    <p th:text="${errorMessage ?: 'Đã xảy ra lỗi trong quá trình thanh toán.'}">Lỗi</p>
+                </div>
+                
+                <!-- Transaction Details -->
+                <div class="transaction-details" th:if="${transactionId}">
+                    <h5>Chi tiết giao dịch</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Mã giao dịch:</strong> <span th:text="${transactionId}">TX123456</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Thời gian:</strong> <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm:ss')}">23/04/2025 15:30:45</span></p>
+                        </div>
+                    </div>
+                    <p th:if="${vnpResponseCode}"><strong>Mã phản hồi:</strong> <span th:text="${vnpResponseCode}">00</span></p>
+                </div>
+                
+                <!-- Action buttons -->
+                <div class="mt-4">
+                    <a th:href="@{/subscription}" class="btn btn-primary">
+                        <i class="fas fa-list me-2"></i>Xem gói đăng ký
+                    </a>
+                    <a th:href="@{/dashboard}" class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-home me-2"></i>Về trang chủ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

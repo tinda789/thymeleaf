@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title>Gói đăng ký</title>
+    <style>
+        .package-card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .package-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .package-header {
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+        .standard-header {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+        }
+        .premium-header {
+            background: linear-gradient(135deg, #8b5cf6, #d946ef);
+        }
+        .vip-header {
+            background: linear-gradient(135deg, #f43f5e, #ec4899);
+        }
+        .package-body {
+            padding: 20px;
+        }
+        .package-price {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+        .subscription-history {
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container">
+        <h2 class="mb-4">Nâng cấp tài khoản</h2>
+        
+        <!-- Thông báo -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <!-- Gói đăng ký -->
+        <div class="row">
+            <div th:each="pkg : ${packages}" class="col-md-4 mb-4">
+                <div class="package-card">
+                    <div class="package-header" th:classappend="${pkg.level.name() == 'STANDARD' ? 'standard-header' : 
+                                                                pkg.level.name() == 'PREMIUM' ? 'premium-header' : 
+                                                                pkg.level.name() == 'VIP' ? 'vip-header' : ''}">
+                        <h3 th:text="${pkg.name}">Gói Standard</h3>
+                        <p class="package-price" th:text="${#numbers.formatDecimal(pkg.price, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">100,000 VNĐ</p>
+                        <p th:text="${pkg.durationDays + ' ngày'}">30 ngày</p>
+                    </div>
+                    <div class="package-body">
+                        <p th:text="${pkg.description}">Mô tả gói</p>
+                        <div class="mb-3">
+                            <p><strong>Bao gồm:</strong></p>
+                            <ul>
+                                <li th:if="${pkg.level.name() == 'STANDARD'}">Tối đa 5 dự án</li>
+                                <li th:if="${pkg.level.name() == 'PREMIUM'}">Tối đa 20 dự án</li>
+                                <li th:if="${pkg.level.name() == 'VIP'}">Không giới hạn dự án</li>
+                                
+                                <li th:if="${pkg.level.name() == 'STANDARD'}">Tối đa 10 thành viên mỗi workspace</li>
+                                <li th:if="${pkg.level.name() == 'PREMIUM'}">Tối đa 50 thành viên mỗi workspace</li>
+                                <li th:if="${pkg.level.name() == 'VIP'}">Không giới hạn thành viên</li>
+                                
+                                <li th:if="${pkg.level.name() == 'STANDARD'}">Hỗ trợ qua email</li>
+                                <li th:if="${pkg.level.name() == 'PREMIUM'}">Hỗ trợ qua email và điện thoại</li>
+                                <li th:if="${pkg.level.name() == 'VIP'}">Hỗ trợ 24/7</li>
+                            </ul>
+                        </div>
+                        <form th:action="@{/subscription/{id}(id=${pkg.id})}" method="post">
+                            <div class="form-group mb-3">
+                                <label>Phương thức thanh toán</label>
+                                <select name="paymentMethod" class="form-select" required>
+                                    <option value="">Chọn phương thức</option>
+                                    <option value="VNPAY">VNPAY</option>
+                                    <option value="MOMO">MoMo</option>
+                                    <option value="BANK_TRANSFER">Chuyển khoản ngân hàng</option>
+                                    <option value="CREDIT_CARD">Thẻ tín dụng</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Nâng cấp ngay</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lịch sử đăng ký -->
+        <div class="subscription-history">
+            <h3 class="mb-4">Lịch sử đăng ký</h3>
+            
+            <div th:if="${subscriptions.empty}" class="alert alert-info">
+                Bạn chưa có gói đăng ký nào.
+            </div>
+            
+            <div th:unless="${subscriptions.empty}" class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Gói</th>
+                            <th>Ngày đăng ký</th>
+                            <th>Ngày hết hạn</th>
+                            <th>Phương thức thanh toán</th>
+                            <th>Số tiền</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="sub : ${subscriptions}">
+                            <td>
+                                <span th:text="${sub.subscriptionPackage.name}"></span>
+                                <span class="badge bg-primary ms-1" th:text="${sub.subscriptionPackage.level}"></span>
+                            </td>
+                            <td th:text="${#temporals.format(sub.purchaseDate, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td th:text="${#temporals.format(sub.expiryDate, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td th:text="${sub.paymentMethod}"></td>
+                            <td th:text="${#numbers.formatDecimal(sub.amountPaid, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}"></td>
+                            <td>
+                                <span th:switch="${sub.paymentStatus.name()}" class="badge">
+                                    <span th:case="'COMPLETED'" class="bg-success">Thành công</span>
+                                    <span th:case="'PENDING'" class="bg-warning">Đang xử lý</span>
+                                    <span th:case="'FAILED'" class="bg-danger">Thất bại</span>
+                                    <span th:case="'REFUNDED'" class="bg-secondary">Đã hoàn tiền</span>
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

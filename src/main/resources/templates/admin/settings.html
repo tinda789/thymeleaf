@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>Cài đặt hệ thống</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Cài đặt hệ thống</h2>
+    </div>
+    
+    <!-- Alert Messages -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show">
+        <i class="fas fa-check-circle me-2"></i>
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <form th:action="@{/admin/settings}" method="post">
+                <div class="mb-3">
+                    <label for="siteName" class="form-label">Tên trang web</label>
+                    <input type="text" class="form-control" id="siteName" name="siteName" th:value="${siteName}">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="contactEmail" class="form-label">Email liên hệ</label>
+                    <input type="email" class="form-control" id="contactEmail" name="contactEmail" th:value="${contactEmail}">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="contactPhone" class="form-label">Số điện thoại liên hệ</label>
+                    <input type="text" class="form-control" id="contactPhone" name="contactPhone" th:value="${contactPhone}">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="paymentNote" class="form-label">Lưu ý khi thanh toán</label>
+                    <textarea class="form-control" id="paymentNote" name="paymentNote" rows="3" th:text="${paymentNote}"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Lưu cài đặt
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

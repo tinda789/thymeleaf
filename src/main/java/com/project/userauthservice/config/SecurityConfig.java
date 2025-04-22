@@ -43,6 +43,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/register", "/login", "/verify-email", "/resend-verification", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                 .requestMatchers("/account/upgrade/**", "/dashboard/**", "/profile/**", "/workspaces/**", "/subscription/**", "/projects/**", "/tasks/**").authenticated()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

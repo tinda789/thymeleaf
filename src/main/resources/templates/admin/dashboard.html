@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        .dashboard-card {
+            border-radius: 10px;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            height: 100%;
+        }
+        .dashboard-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .chart-container {
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2 class="mb-4">Dashboard</h2>
+    
+    <!-- Revenue Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="dashboard-card">
+                <h5>Doanh thu hôm nay</h5>
+                <div class="dashboard-value text-primary" th:text="${#numbers.formatDecimal(revenueStats.todayRevenue, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 VNĐ</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="dashboard-card">
+                <h5>Doanh thu tuần này</h5>
+                <div class="dashboard-value text-success" th:text="${#numbers.formatDecimal(revenueStats.weekRevenue, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 VNĐ</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="dashboard-card">
+                <h5>Doanh thu tháng này</h5>
+                <div class="dashboard-value text-info" th:text="${#numbers.formatDecimal(revenueStats.monthRevenue, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 VNĐ</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="dashboard-card">
+                <h5>Tổng số người dùng</h5>
+                <div class="dashboard-value text-primary" th:text="${userStats.totalUsers}">0</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="dashboard-card">
+                <h5>Người dùng đang hoạt động</h5>
+                <div class="dashboard-value text-success" th:text="${userStats.activeUsers}">0</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="dashboard-card">
+                <h5>Tỷ lệ hoạt động</h5>
+                <div class="dashboard-value text-info" th:text="${userStats.totalUsers > 0 ? #numbers.formatDecimal(userStats.activeUsers * 100 / userStats.totalUsers, 0, 1) + '%' : '0%'}">0%</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="dashboard-card">
+                <h5>Doanh thu theo gói đăng ký</h5>
+                <div class="chart-container">
+                    <canvas id="packageRevenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="dashboard-card">
+                <h5>Thống kê người dùng theo gói</h5>
+                <div class="chart-container">
+                    <canvas id="userLevelChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:inline="javascript">
+        // Doanh thu theo gói
+        const packageRevenueData = /*[[${revenueStats.revenueByPackage}]]*/ {};
+        const packageLabels = Object.keys(packageRevenueData);
+        const packageValues = Object.values(packageRevenueData);
+        
+        new Chart(document.getElementById('packageRevenueChart'), {
+            type: 'bar',
+            data: {
+                labels: packageLabels,
+                datasets: [{
+                    label: 'Doanh thu (VNĐ)',
+                    data: packageValues,
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(153, 102, 255, 0.5)',
+                        'rgba(255, 99, 132, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgb(54, 162, 235)',
+                        'rgb(153, 102, 255)',
+                        'rgb(255, 99, 132)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('vi-VN') + ' VNĐ';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Người dùng theo cấp độ
+        const userByLevelData = /*[[${userStats.usersByLevel}]]*/ {};
+        const levelLabels = Object.keys(userByLevelData).map(key => {
+            switch(key) {
+                case 'FREE': return 'Miễn phí';
+                case 'STANDARD': return 'Standard';
+                case 'PREMIUM': return 'Premium';
+                case 'VIP': return 'VIP';
+                default: return key;
+            }
+        });
+        const levelValues = Object.values(userByLevelData);
+        
+        new Chart(document.getElementById('userLevelChart'), {
+            type: 'pie',
+            data: {
+                labels: levelLabels,
+                datasets: [{
+                    data: levelValues,
+                    backgroundColor: [
+                        'rgba(128, 128, 128, 0.5)',
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(153, 102, 255, 0.5)',
+                        'rgba(255, 99, 132, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgb(128, 128, 128)',
+                        'rgb(54, 162, 235)',
+                        'rgb(153, 102, 255)',
+                        'rgb(255, 99, 132)'
+                    ],
+                    borderWidth: 1
+                }]
+            }
+        });
+    </script>
+</th:block>
+</body>
+</html>

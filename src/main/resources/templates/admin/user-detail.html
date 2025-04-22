@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>Chi tiết người dùng</title>
+    <style>
+        .user-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .user-info-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Chi tiết người dùng</h2>
+        <a th:href="@{/admin/users}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="user-info-section text-center">
+                <img th:if="${user.avatar != null}" th:src="@{'/uploads/avatars/' + ${user.avatar}}" class="user-avatar mb-3" alt="Avatar">
+                <div th:unless="${user.avatar != null}" class="user-avatar mb-3 d-flex align-items-center justify-content-center bg-primary">
+                    <span class="text-white" style="font-size: 3rem;" th:text="${#strings.substring(user.fullName, 0, 1).toUpperCase()}">A</span>
+                </div>
+                
+                <h4 th:text="${user.fullName}">Họ Tên</h4>
+                <p class="text-muted" th:text="${user.email}">email@example.com</p>
+                
+                <div class="d-flex justify-content-center mt-3">
+                    <form th:action="@{/admin/users/{id}/toggle-active(id=${user.id})}" method="post" class="me-2">
+                        <button class="btn btn-warning" type="submit">
+                            <i class="fas" th:classappend="${user.active ? 'fa-user-slash' : 'fa-user-check'}"></i>
+                            <span th:text="${user.active ? 'Vô hiệu hóa' : 'Kích hoạt'}">Vô hiệu hóa</span>
+                        </button>
+                    </form>
+                    <form th:action="@{/admin/users/{id}/toggle-locked(id=${user.id})}" method="post">
+                        <button class="btn btn-danger" type="submit">
+                            <i class="fas" th:classappend="${user.locked ? 'fa-unlock' : 'fa-lock'}"></i>
+                            <span th:text="${user.locked ? 'Mở khóa' : 'Khóa tài khoản'}">Khóa tài khoản</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="user-info-section">
+                <h5>Thông tin cá nhân</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <tr>
+                            <th>Username:</th>
+                            <td th:text="${user.username}">username</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td th:text="${user.email}">email@example.com</td>
+                        </tr>
+                        <tr>
+                            <th>Họ tên:</th>
+                            <td th:text="${user.fullName}">Họ tên</td>
+                        </tr>
+                        <tr>
+                            <th>Số điện thoại:</th>
+                            <td th:text="${user.phoneNumber ?: 'Chưa cập nhật'}">0123456789</td>
+                        </tr>
+                        <tr>
+                            <th>Ngày sinh:</th>
+                            <td th:text="${user.dateOfBirth != null ? #temporals.format(user.dateOfBirth, 'dd/MM/yyyy') : 'Chưa cập nhật'}">01/01/1990</td>
+                        </tr>
+                        <tr>
+                            <th>Giới tính:</th>
+                            <td th:text="${user.gender != null ? (user.gender == T(com.project.userauthservice.entity.user.User.Gender).MALE ? 'Nam' : 
+                                                                 user.gender == T(com.project.userauthservice.entity.user.User.Gender).FEMALE ? 'Nữ' : 
+                                                                 user.gender == T(com.project.userauthservice.entity.user.User.Gender).OTHER ? 'Khác' : 'Không tiết lộ') 
+                                                              : 'Chưa cập nhật'}">Nam</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="user-info-section">
+                <h5>Thông tin tài khoản</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <tr>
+                            <th>Trạng thái:</th>
+                            <td>
+                                <span class="badge rounded-pill" 
+                                      th:classappend="${user.active ? 'bg-success' : 'bg-danger'}" 
+                                      th:text="${user.active ? 'Hoạt động' : 'Vô hiệu hóa'}">
+                                    Hoạt động
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Khóa:</th>
+                            <td>
+                                <span class="badge rounded-pill" 
+                                      th:classappend="${user.locked ? 'bg-danger' : 'bg-success'}" 
+                                      th:text="${user.locked ? 'Đã khóa' : 'Không khóa'}">
+                                    Không khóa
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Email xác thực:</th>
+                            <td>
+                                <span class="badge rounded-pill" 
+                                      th:classappend="${user.emailVerified ? 'bg-success' : 'bg-warning'}" 
+                                      th:text="${user.emailVerified ? 'Đã xác thực' : 'Chưa xác thực'}">
+                                    Đã xác thực
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Gói đăng ký:</th>
+                            <td>
+                                <span class="badge rounded-pill" 
+                                      th:classappend="${
+                                          user.accountLevel == T(com.project.userauthservice.entity.subscription.SubscriptionPackage.AccountLevel).FREE ? 'bg-secondary' : 
+                                          user.accountLevel == T(com.project.userauthservice.entity.subscription.SubscriptionPackage.AccountLevel).STANDARD ? 'bg-primary' : 
+                                          user.accountLevel == T(com.project.userauthservice.entity.subscription.SubscriptionPackage.AccountLevel).PREMIUM ? 'bg-info' : 
+                                          'bg-warning'
+                                      }" 
+                                      th:text="${user.accountLevel}">
+                                    FREE
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Hết hạn gói:</th>
+                            <td th:text="${user.accountLevelExpiry != null ? #temporals.format(user.accountLevelExpiry, 'dd/MM/yyyy HH:mm') : 'Không có'}">01/01/2023</td>
+                        </tr>
+                        <tr>
+                            <th>Ngày đăng ký:</th>
+                            <td th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2023</td>
+                        </tr>
+                        <tr>
+                            <th>Đăng nhập cuối:</th>
+                            <td th:text="${user.lastLoginAt != null ? #temporals.format(user.lastLoginAt, 'dd/MM/yyyy HH:mm') : 'Chưa đăng nhập'}">01/01/2023</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

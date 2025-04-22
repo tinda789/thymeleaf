@@ -93,6 +93,17 @@
                         <i class="fas fa-th-large"></i> Workspaces
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a th:href="@{/subscription}" class="nav-link" 
+                       th:classappend="${#strings.startsWith(currentPath, '/subscription')} ? 'active' : ''">
+                        <i class="fas fa-crown"></i> Nâng cấp tài khoản
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ROLE_ADMIN')">
+                    <a th:href="@{/admin/dashboard}" class="nav-link">
+                        <i class="fas fa-shield-alt me-2"></i>Admin Panel
+                    </a>
+                </li>
                 
             </ul>
         </nav>

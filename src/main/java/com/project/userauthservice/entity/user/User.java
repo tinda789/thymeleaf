@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+
+import com.project.userauthservice.entity.subscription.SubscriptionPackage;
 import com.project.userauthservice.entity.user.Genders;
 
 
@@ -88,6 +90,13 @@ public class User {
     public boolean isLocked() {
         return locked;
     }
+
+    @Column(name = "account_level")
+@Enumerated(EnumType.STRING)
+private SubscriptionPackage.AccountLevel accountLevel = SubscriptionPackage.AccountLevel.FREE;
+
+@Column(name = "account_level_expiry")
+private LocalDateTime accountLevelExpiry;
     
 
     public enum Gender {

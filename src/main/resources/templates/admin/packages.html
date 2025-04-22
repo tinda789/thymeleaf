@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>Quản lý gói đăng ký</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Quản lý gói đăng ký</h2>
+        <a th:href="@{/admin/packages/create}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Thêm gói mới
+        </a>
+    </div>
+    
+    <!-- Alert Messages -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show">
+        <i class="fas fa-check-circle me-2"></i>
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    
+    <!-- Packages Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên gói</th>
+                            <th>Mô tả</th>
+                            <th>Giá (VNĐ)</th>
+                            <th>Thời hạn</th>
+                            <th>Cấp độ</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="pkg : ${packages}">
+                            <td th:text="${pkg.id}">1</td>
+                            <td th:text="${pkg.name}">Standard</td>
+                            <td th:text="${#strings.length(pkg.description) > 50 ? #strings.substring(pkg.description, 0, 50) + '...' : pkg.description}">Mô tả gói...</td>
+                            <td th:text="${#numbers.formatDecimal(pkg.price, 0, 'COMMA', 0, 'POINT')}">100,000</td>
+                            <td th:text="${pkg.durationDays + ' ngày'}">30 ngày</td>
+                            <td>
+                                <span class="badge rounded-pill" 
+                                      th:classappend="${
+                                          pkg.level == T(com.project.userauthservice.entity.subscription.SubscriptionPackage.AccountLevel).FREE ? 'bg-secondary' : 
+                                          pkg.level == T(com.project.userauthservice.entity.subscription.SubscriptionPackage.AccountLevel).STANDARD ? 'bg-primary' : 
+                                          pkg.level == T(com.project.userauthservice.entity.subscription.SubscriptionPackage.AccountLevel).PREMIUM ? 'bg-info' : 
+                                          'bg-warning'
+                                      }" 
+                                      th:text="${pkg.level}">
+                                    STANDARD
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill" 
+                                      th:classappend="${pkg.active ? 'bg-success' : 'bg-danger'}" 
+                                      th:text="${pkg.active ? 'Kích hoạt' : 'Vô hiệu hóa'}">
+                                    Kích hoạt
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a th:href="@{/admin/packages/{id}/edit(id=${pkg.id})}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form th:action="@{/admin/packages/{id}/toggle-active(id=${pkg.id})}" method="post" class="d-inline">
+                                        <button class="btn btn-sm btn-warning" type="submit" 
+                                                th:title="${pkg.active ? 'Vô hiệu hóa' : 'Kích hoạt'}">
+                                            <i class="fas" th:classappend="${pkg.active ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

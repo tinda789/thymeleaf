@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/dashboard-layout}">
+<head>
+    <title>Thanh toán chuyển khoản</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Thông tin chuyển khoản</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <p>Vui lòng chuyển khoản theo thông tin dưới đây và chờ xác nhận từ hệ thống.</p>
+                        </div>
+                        
+                        <div class="bank-info p-3 bg-light border rounded mb-4">
+                            <pre th:text="${bankInfo}" class="mb-0">Thông tin ngân hàng</pre>
+                        </div>
+                        
+                        <p>Sau khi chuyển khoản, vui lòng chờ hệ thống xác nhận (khoảng 5-10 phút).</p>
+                        <p>Nếu cần hỗ trợ gấp, vui lòng liên hệ hotline: <strong>1900 xxxx</strong></p>
+                        
+                        <div class="text-center mt-4">
+                            <a th:href="@{/subscription}" class="btn btn-secondary me-2">
+                                <i class="fas fa-arrow-left me-2"></i>Quay lại
+                            </a>
+                            <button class="btn btn-success" id="checkBtn">
+                                <i class="fas fa-sync-alt me-2"></i>Kiểm tra trạng thái
+                            </button>
+                        </div>
+                        
+                        <!-- Form ẩn để admin xác nhận khi cần thiết -->
+                        <form th:action="@{/subscription/verify-bank-transfer}" method="post" class="mt-4" 
+                              th:if="${#authorization.expression('hasRole(''ROLE_ADMIN'')')}">
+                            <div class="alert alert-warning">
+                                <p><strong>Dành cho Admin:</strong> Xác nhận thanh toán thủ công</p>
+                            </div>
+                            <input type="hidden" name="transactionId" th:value="${transactionId}">
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="fas fa-check-circle me-2"></i>Xác nhận đã thanh toán
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // Giả lập kiểm tra trạng thái thanh toán
+    document.getElementById('checkBtn').addEventListener('click', function() {
+        const transactionId = [[$transactionId]];
+        
+        // Hiển thị loading
+        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang kiểm tra...';
+        this.disabled = true;
+        
+        // Giả lập gọi API kiểm tra
+        setTimeout(() => {
+            // Chuyển hướng về trang subscription để xem trạng thái mới
+            window.location.href = '/subscription';
+        }, 2000);
+    });
+</script>
+</body>
+</html>

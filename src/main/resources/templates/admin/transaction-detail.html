@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>Chi tiết giao dịch</title>
+    <style>
+        .transaction-card {
+            border-radius: 12px;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Chi tiết giao dịch</h2>
+        <a th:href="@{/admin/transactions}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="transaction-card">
+                <h5>Thông tin giao dịch</h5>
+                <table class="table">
+                    <tr>
+                        <th>ID:</th>
+                        <td th:text="${transaction.id}">1</td>
+                    </tr>
+                    <tr>
+                        <th>Mã giao dịch:</th>
+                        <td th:text="${transaction.transactionId}">TX123456</td>
+                    </tr>
+                    <tr>
+                        <th>Số tiền:</th>
+                        <td th:text="${#numbers.formatDecimal(transaction.amount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">100,000 VNĐ</td>
+                    </tr>
+                    <tr>
+                        <th>Phương thức:</th>
+                        <td th:text="${transaction.paymentMethod}">VNPAY</td>
+                    </tr>
+                    <tr>
+                        <th>Trạng thái:</th>
+                        <td>
+                            <span class="badge rounded-pill" 
+                                  th:classappend="${
+                                      transaction.status == T(com.project.userauthservice.entity.subscription.PaymentTransaction.TransactionStatus).COMPLETED ? 'bg-success' : 
+                                      transaction.status == T(com.project.userauthservice.entity.subscription.PaymentTransaction.TransactionStatus).PENDING ? 'bg-warning' : 
+                                      transaction.status == T(com.project.userauthservice.entity.subscription.PaymentTransaction.TransactionStatus).INITIATED ? 'bg-info' : 
+                                      transaction.status == T(com.project.userauthservice.entity.subscription.PaymentTransaction.TransactionStatus).FAILED ? 'bg-danger' : 
+                                      'bg-secondary'
+                                  }" 
+                                  th:text="${transaction.status}">
+                                COMPLETED
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Ngày giao dịch:</th>
+                        <td th:text="${#temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm:ss')}">01/01/2023 12:00:00</td>
+                    </tr>
+                    <tr>
+                        <th>Chi tiết thanh toán:</th>
+                        <td>
+                            <pre th:text="${transaction.paymentDetails ?: 'Không có'}" style="white-space: pre-wrap;">Chi tiết thanh toán</pre>
+                        </td>
+                    </tr>
+                </table>
+                
+                <div th:if="${transaction.status == T(com.project.userauthservice.entity.subscription.PaymentTransaction.TransactionStatus).PENDING}">
+                    <form th:action="@{/admin/transactions/{id}/verify-payment(id=${transaction.id})}" method="post">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check-circle me-2"></i>Xác nhận thanh toán
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="transaction-card">
+                <h5>Thông tin người dùng</h5>
+                <table class="table">
+                    <tr>
+                        <th>ID:</th>
+                        <td th:text="${transaction.user.id}">1</td>
+                    </tr>
+                    <tr>
+                        <th>Username:</th>
+                        <td>
+                            <a th:href="@{/admin/users/{id}(id=${transaction.user.id})}" th:text="${transaction.user.username}">username</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td th:text="${transaction.user.email}">email@example.com</td>
+                    </tr>
+                    <tr>
+                        <th>Họ tên:</th>
+                        <td th:text="${transaction.user.fullName}">Họ tên</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="transaction-card" th:if="${transaction.userSubscription != null}">
+                <h5>Thông tin gói đăng ký</h5>
+                <table class="table">
+                    <tr>
+                        <th>Tên gói:</th>
+                        <td th:text="${transaction.userSubscription.subscriptionPackage.name}">Standard</td>
+                    </tr>
+                    <tr>
+                        <th>Cấp độ:</th>
+                        <td>
+                            <span class="badge rounded-pill" 
+                                  th:classappend="${
+                                      transaction.userSubscription.subscriptionPackage.level == T(com.project.userauthservice.entity.subscription.SubscriptionPackage.AccountLevel).STANDARD ? 'bg-primary' : 
+                                      transaction.userSubscription.subscriptionPackage.level == T(com.project.userauthservice.entity.subscription.SubscriptionPackage.AccountLevel).PREMIUM ? 'bg-info' : 
+                                      'bg-warning'
+                                  }" 
+                                  th:text="${transaction.userSubscription.subscriptionPackage.level}">
+                                STANDARD
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Thời hạn:</th>
+                        <td th:text="${transaction.userSubscription.subscriptionPackage.durationDays + ' ngày'}">30 ngày</td>
+                    </tr>
+                    <tr>
+                        <th>Ngày đăng ký:</th>
+                        <td th:text="${#temporals.format(transaction.userSubscription.purchaseDate, 'dd/MM/yyyy HH:mm')}">01/01/2023</td>
+                    </tr>
+                    <tr>
+                        <th>Ngày hết hạn:</th>
+                        <td th:text="${#temporals.format(transaction.userSubscription.expiryDate, 'dd/MM/yyyy HH:mm')}">01/02/2023</td>
+                    </tr>
+                    <tr>
+                        <th>Trạng thái:</th>
+                        <td>
+                            <span class="badge rounded-pill" 
+                                  th:classappend="${
+                                      transaction.userSubscription.paymentStatus == T(com.project.userauthservice.entity.subscription.UserSubscription.PaymentStatus).COMPLETED ? 'bg-success' : 
+                                      transaction.userSubscription.paymentStatus == T(com.project.userauthservice.entity.subscription.UserSubscription.PaymentStatus).PENDING ? 'bg-warning' : 
+                                      transaction.userSubscription.paymentStatus == T(com.project.userauthservice.entity.subscription.UserSubscription.PaymentStatus).FAILED ? 'bg-danger' : 
+                                      'bg-secondary'
+                                  }" 
+                                  th:text="${transaction.userSubscription.paymentStatus}">
+                                COMPLETED
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

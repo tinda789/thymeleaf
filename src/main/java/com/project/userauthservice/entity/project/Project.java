@@ -66,9 +66,7 @@ public class Project {
         ACTIVE, COMPLETED, ON_HOLD, CANCELLED
     }
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "status_id", nullable = false)
-    private ProjectStatuses statuss;
+    
     
     @PrePersist
     protected void onCreate() {

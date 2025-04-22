@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title th:text="${package.id != null ? 'Chỉnh sửa gói đăng ký' : 'Thêm gói đăng ký mới'}">Gói đăng ký</title>
+    <style>
+        .preview-card {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .preview-header {
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+        .standard-header {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+        }
+        .premium-header {
+            background: linear-gradient(135deg, #8b5cf6, #d946ef);
+        }
+        .vip-header {
+            background: linear-gradient(135deg, #f43f5e, #ec4899);
+        }
+        .preview-body {
+            padding: 20px;
+        }
+        .preview-price {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 th:text="${package.id != null ? 'Chỉnh sửa gói đăng ký' : 'Thêm gói đăng ký mới'}">Gói đăng ký</h2>
+        <a th:href="@{/admin/packages}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-body">
+                    <form th:action="${package.id != null ? '/admin/packages/' + package.id + '/edit' : '/admin/packages/create'}"
+                          th:object="${package}" method="post">
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Tên gói <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Mô tả</label>
+                            <textarea class="form-control" id="description" th:field="*{description}" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="price" class="form-label">Giá (VNĐ) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="price" th:field="*{price}" min="0" step="10000" required>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="durationDays" class="form-label">Thời hạn (ngày) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="durationDays" th:field="*{durationDays}" min="1" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="level" class="form-label">Cấp độ <span class="text-danger">*</span></label>
+                            <select class="form-select" id="level" th:field="*{level}" required>
+                                <option value="">-- Chọn cấp độ --</option>
+                                <option th:each="lvl : ${accountLevels}" 
+                                        th:value="${lvl}" 
+                                        th:text="${lvl}">
+                                    STANDARD
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="active" th:field="*{active}">
+                            <label class="form-check-label" for="active">Kích hoạt gói</label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Lưu
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-5">
+            <div class="preview-card">
+                <div id="previewHeader" class="preview-header standard-header">
+                    <h3 id="previewName">Tên gói</h3>
+                    <p id="previewPrice" class="preview-price">0 VNĐ</p>
+                    <p id="previewDuration">0 ngày</p>
+                </div>
+                <div class="preview-body">
+                    <p id="previewDescription">Mô tả gói sẽ hiển thị ở đây...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="scripts">
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.getElementById('name');
+            const descInput = document.getElementById('description');
+            const priceInput = document.getElementById('price');
+            const durationInput = document.getElementById('durationDays');
+            const levelSelect = document.getElementById('level');
+            
+            const previewName = document.getElementById('previewName');
+            const previewDesc = document.getElementById('previewDescription');
+            const previewPrice = document.getElementById('previewPrice');
+            const previewDuration = document.getElementById('previewDuration');
+            const previewHeader = document.getElementById('previewHeader');
+            
+            // Initial update
+            updatePreview();
+            
+            // Update on input change
+            nameInput.addEventListener('input', updatePreview);
+            descInput.addEventListener('input', updatePreview);
+            priceInput.addEventListener('input', updatePreview);
+            durationInput.addEventListener('input', updatePreview);
+            levelSelect.addEventListener('change', updatePreview);
+            
+            function updatePreview() {
+                previewName.textContent = nameInput.value || 'Tên gói';
+                previewDesc.textContent = descInput.value || 'Mô tả gói sẽ hiển thị ở đây...';
+                
+                const price = priceInput.value ? parseInt(priceInput.value).toLocaleString('vi-VN') : '0';
+                previewPrice.textContent = price + ' VNĐ';
+                
+                const duration = durationInput.value || '0';
+                previewDuration.textContent = duration + ' ngày';
+                
+                // Update header style based on level
+                previewHeader.className = 'preview-header';
+                
+                if (levelSelect.value === 'STANDARD') {
+                    previewHeader.classList.add('standard-header');
+                } else if (levelSelect.value === 'PREMIUM') {
+                    previewHeader.classList.add('premium-header');
+                } else if (levelSelect.value === 'VIP') {
+                    previewHeader.classList.add('vip-header');
+                } else {
+                    previewHeader.classList.add('standard-header');
+                }
+            }
+        });
+    </script>
+</th:block>
+</body>
+</html>

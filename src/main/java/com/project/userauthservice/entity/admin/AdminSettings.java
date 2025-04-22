@@ -1,4 +1,4 @@
-package com.project.userauthservice.entity.task;
+package com.project.userauthservice.entity.admin;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,40 +6,28 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "task_priorities")
+@Table(name = "admin_settings")
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskPriorities {
+@Builder
+public class AdminSettings {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
     @Column(nullable = false, unique = true)
-    private String name;
+    private String settingKey;
     
-    @Column(length = 500)
-    private String description;
-    
-    @Column(name = "color_code")
-    private String colorCode;
-    
-    @Column(name = "display_order")
-    private Integer displayOrder;
-    
-    @Column(name = "priority_level")
-    private Integer priorityLevel;
+    @Column(columnDefinition = "TEXT")
+    private String settingValue;
     
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    
-    @Column(nullable = false)
-    private boolean active = true;
     
     @PrePersist
     protected void onCreate() {

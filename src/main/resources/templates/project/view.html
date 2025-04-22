@@ -116,15 +116,7 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <form th:action="@{/workspaces/{workspaceId}/projects/{projectId}/upload(workspaceId=${workspace.id}, projectId=${project.id})}" 
-                              method="post" 
-                              enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label for="file" class="form-label">Tải lên file</label>
-                                <input type="file" class="form-control" id="file" name="file">
-                            </div>
-                            <button type="submit" class="btn btn-primary">Tải lên</button>
-                        </form>
+                       
                     </div>
                 </div>
             </div>

@@ -64,27 +64,16 @@ public class SubscriptionService {
             int currentIndex = levels.indexOf(currentSub.getSubscriptionPackage().getLevel());
             int newIndex = levels.indexOf(pkg.getLevel());
             
-            // Nếu gói mới cao hơn gói hiện tại hoặc là gia hạn gói cũ
+            // Nếu gói mới cao hơn hoặc bằng gói hiện tại
             if (newIndex >= currentIndex) {
-                // Tính số ngày còn lại của gói hiện tại
-                long remainingDays = ChronoUnit.DAYS.between(LocalDateTime.now(), currentSub.getExpiryDate());
+                // Cộng thêm thời gian của gói mới
+                expiryDate = currentSub.getExpiryDate().plusDays(pkg.getDurationDays());
                 
-                if (pkg.getId().equals(currentSub.getSubscriptionPackage().getId())) {
-                    // Nếu là gia hạn cùng gói, cộng thêm thời gian
-                    expiryDate = currentSub.getExpiryDate().plusDays(pkg.getDurationDays());
-                } else {
-                    // Nếu nâng cấp gói mới cao hơn
-                    // Tính giá trị còn lại của gói hiện tại để khấu trừ
-                    double remainingValue = remainingDays > 0 ?
-                        (currentSub.getAmountPaid() / currentSub.getSubscriptionPackage().getDurationDays()) * remainingDays : 0;
-                    
-                    // Tổng số tiền sẽ là giá gói mới trừ đi giá trị còn lại
-                    amountPaid = pkg.getPrice() - remainingValue;
-                    if (amountPaid < 0) amountPaid = 0; // Đảm bảo không bị âm
-                    
-                    // Đặt ngày hết hạn mới
-                    expiryDate = LocalDateTime.now().plusDays(pkg.getDurationDays());
-                }
+                // Tổng số tiền của cả hai gói
+                amountPaid += currentSub.getAmountPaid();
+                
+                // Xóa gói cũ để tránh trùng lặp
+                subscriptionRepository.delete(currentSub);
             } else {
                 // Không cho phép hạ cấp gói
                 throw new RuntimeException("Không thể đăng ký gói thấp hơn. Vui lòng chờ hết hạn gói hiện tại.");

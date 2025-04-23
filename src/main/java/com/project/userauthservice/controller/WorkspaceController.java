@@ -2,6 +2,7 @@ package com.project.userauthservice.controller;
 
 import com.project.userauthservice.dto.WorkspaceCreateDto;
 import com.project.userauthservice.dto.WorkspaceMemberAddDto;
+import com.project.userauthservice.dto.WorkspaceUpdateDto;
 import com.project.userauthservice.entity.workspace.Workspace;
 import com.project.userauthservice.entity.workspace.WorkspaceMember;
 import com.project.userauthservice.entity.project.Project;
@@ -223,4 +224,71 @@ public class WorkspaceController {
             return "redirect:/workspaces/" + id;
         }
     }
+
+    @GetMapping("/{id}/edit")
+public String editWorkspaceForm(
+    @PathVariable Long id, 
+    Model model,
+    @AuthenticationPrincipal UserDetails userDetails,
+    RedirectAttributes redirectAttributes
+) {
+    try {
+        User currentUser = userRepository.findByUsername(userDetails.getUsername())
+            .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+            
+        Workspace workspace = workspaceService.getWorkspaceById(id);
+        
+        // Kiểm tra quyền
+        WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(workspace, currentUser)
+            .orElseThrow(() -> new RuntimeException("Bạn không phải là thành viên của workspace này"));
+            
+        if (member.getRole() != WorkspaceMember.WorkspaceRole.OWNER && 
+            member.getRole() != WorkspaceMember.WorkspaceRole.ADMIN) {
+            throw new RuntimeException("Bạn không có quyền chỉnh sửa workspace này");
+        }
+        
+        // Tạo DTO để chỉnh sửa
+        WorkspaceUpdateDto dto = new WorkspaceUpdateDto();
+        dto.setName(workspace.getName());
+        dto.setDescription(workspace.getDescription());
+        
+        model.addAttribute("workspace", workspace);
+        model.addAttribute("workspaceForm", dto);
+        
+        return "workspace/edit";
+    } catch (RuntimeException e) {
+        redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        return "redirect:/workspaces";
+    }
+}
+
+@PostMapping("/{id}/edit")
+public String updateWorkspace(
+    @PathVariable Long id,
+    @Valid @ModelAttribute("workspaceForm") WorkspaceUpdateDto dto,
+    BindingResult result,
+    @AuthenticationPrincipal UserDetails userDetails,
+    RedirectAttributes redirectAttributes,
+    Model model
+) {
+    if (result.hasErrors()) {
+        try {
+            Workspace workspace = workspaceService.getWorkspaceById(id);
+            model.addAttribute("workspace", workspace);
+            return "workspace/edit";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/workspaces";
+        }
+    }
+    
+    try {
+        workspaceService.updateWorkspace(id, dto, userDetails.getUsername());
+        redirectAttributes.addFlashAttribute("successMessage", "Workspace đã được cập nhật thành công!");
+        return "redirect:/workspaces/" + id;
+    } catch (Exception e) {
+        redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        return "redirect:/workspaces/" + id;
+    }
+}
 }

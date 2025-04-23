@@ -1,6 +1,7 @@
 package com.project.userauthservice.service;
 
 import com.project.userauthservice.dto.WorkspaceCreateDto;
+import com.project.userauthservice.dto.WorkspaceUpdateDto;
 import com.project.userauthservice.entity.project.Project;
 import com.project.userauthservice.entity.task.Task;
 import com.project.userauthservice.entity.user.User;
@@ -165,42 +166,67 @@ public class WorkspaceService {
         workspaceMemberRepository.delete(memberToRemove);
     }
 
-     @Transactional
-    public void deleteWorkspace(Long workspaceId, String username) {
-        // Tìm workspace
-        Workspace workspace = workspaceRepository.findById(workspaceId)
-                .orElseThrow(() -> new RuntimeException("Workspace không tồn tại"));
-        
-        // Tìm người dùng hiện tại
-        User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
-        
-        // Kiểm tra quyền
-        WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(workspace, currentUser)
-                .orElseThrow(() -> new RuntimeException("Bạn không phải là thành viên của workspace này"));
-        
-        // Chỉ OWNER và ADMIN mới được xóa
-        if (member.getRole() != WorkspaceMember.WorkspaceRole.OWNER && 
-            member.getRole() != WorkspaceMember.WorkspaceRole.ADMIN) {
-            throw new RuntimeException("Bạn không có quyền xóa workspace này");
-        }
-        
-        // Xóa các project trong workspace trước
-        List<Project> projects = projectRepository.findByWorkspace(workspace);
-        for (Project project : projects) {
-            // Xóa tasks của từng project
-            List<Task> tasks = taskRepository.findByProject(project);
-            taskRepository.deleteAll(tasks);
-            
-            // Xóa project
-            projectRepository.delete(project);
-        }
-        
-        // Xóa workspace
-        workspaceMemberRepository.deleteByWorkspace(workspace);
-        workspaceRepository.delete(workspace);
-    }
 
+
+  @Transactional
+public Workspace updateWorkspace(Long workspaceId, WorkspaceUpdateDto dto, String username) {
+    Workspace workspace = workspaceRepository.findById(workspaceId)
+            .orElseThrow(() -> new RuntimeException("Workspace không tồn tại"));
+    
+    User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+    
+    // Kiểm tra quyền - chỉ OWNER và ADMIN mới được chỉnh sửa workspace
+    WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)
+            .orElseThrow(() -> new RuntimeException("Bạn không phải là thành viên của workspace này"));
+            
+    if (member.getRole() != WorkspaceMember.WorkspaceRole.OWNER && 
+        member.getRole() != WorkspaceMember.WorkspaceRole.ADMIN) {
+        throw new RuntimeException("Bạn không có quyền chỉnh sửa workspace này");
+    }
+    
+    // Cập nhật thông tin workspace
+    workspace.setName(dto.getName());
+    workspace.setDescription(dto.getDescription());
+    
+    return workspaceRepository.save(workspace);
+}
+
+// Cập nhật phương thức deleteWorkspace để chỉ cho phép OWNER xóa
+@Transactional
+public void deleteWorkspace(Long workspaceId, String username) {
+    // Tìm workspace
+    Workspace workspace = workspaceRepository.findById(workspaceId)
+            .orElseThrow(() -> new RuntimeException("Workspace không tồn tại"));
+    
+    // Tìm người dùng hiện tại
+    User currentUser = userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+    
+    // Kiểm tra quyền - chỉ OWNER mới được xóa workspace
+    WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(workspace, currentUser)
+            .orElseThrow(() -> new RuntimeException("Bạn không phải là thành viên của workspace này"));
+    
+    // Chỉ OWNER mới được xóa
+    if (member.getRole() != WorkspaceMember.WorkspaceRole.OWNER) {
+        throw new RuntimeException("Chỉ chủ sở hữu (Owner) mới có quyền xóa workspace này");
+    }
+    
+    // Xóa các project trong workspace trước
+    List<Project> projects = projectRepository.findByWorkspace(workspace);
+    for (Project project : projects) {
+        // Xóa tasks của từng project
+        List<Task> tasks = taskRepository.findByProject(project);
+        taskRepository.deleteAll(tasks);
+        
+        // Xóa project
+        projectRepository.delete(project);
+    }
+    
+    // Xóa workspace
+    workspaceMemberRepository.deleteByWorkspace(workspace);
+    workspaceRepository.delete(workspace);
+}
     public void validateWorkspaceCreation(User user) {
         int currentWorkspaceCount = workspaceRepository.countByOwner(user);
         

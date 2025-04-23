@@ -1,4 +1,3 @@
-<!-- templates/workspace/view.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
@@ -8,19 +7,28 @@
     <style>
         :root {
             --workspace-primary: #6366f1;
+            --workspace-primary-hover: #4f46e5;
             --workspace-secondary: #8b5cf6;
             --workspace-light: #f5f3ff;
+            --workspace-bg-gradient: linear-gradient(135deg, var(--workspace-primary) 0%, var(--workspace-secondary) 100%);
         }
         
+        /* Workspace Header */
         .workspace-header {
-            background: linear-gradient(135deg, var(--workspace-primary) 0%, var(--workspace-secondary) 100%);
+            background: var(--workspace-bg-gradient);
             color: white;
             padding: 2rem;
             border-radius: 12px;
             margin-bottom: 2rem;
             box-shadow: 0 4px 20px rgba(99, 102, 241, 0.2);
             position: relative;
-            overflow: hidden;
+            overflow: visible;
+            transition: all 0.3s ease;
+        }
+        
+        .workspace-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(99, 102, 241, 0.3);
         }
         
         .workspace-header::after {
@@ -34,6 +42,7 @@
             transform: rotate(30deg);
         }
         
+        /* Workspace Logo */
         .workspace-logo {
             width: 80px;
             height: 80px;
@@ -47,16 +56,35 @@
             flex-shrink: 0;
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s ease;
         }
         
+        .workspace-logo:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Workspace Key */
         .workspace-key {
             background: rgba(255,255,255,0.2);
             padding: 0.4rem 0.8rem;
             border-radius: 8px;
             display: inline-block;
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
             font-size: 0.9rem;
             backdrop-filter: blur(5px);
+            transition: all 0.2s ease;
+        }
+        
+        .workspace-key:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
         
         .stats-card {
@@ -68,6 +96,18 @@
             transition: all 0.3s ease;
             border: 1px solid rgba(0,0,0,0.03);
             height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--workspace-bg-gradient);
         }
         
         .stats-card:hover {
@@ -88,6 +128,20 @@
             margin-bottom: 0;
         }
         
+        /* Main Content Layout */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (min-width: 992px) {
+            .content-grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+        
+        /* Cards */
         .card {
             border: none;
             border-radius: 12px;
@@ -97,6 +151,7 @@
             height: 100%;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
         
         .card:hover {
@@ -108,14 +163,25 @@
             background: transparent;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             padding: 1.25rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-header h5 {
+            font-weight: 600;
+            color: #334155;
+            margin: 0;
         }
         
         .card-body {
             flex: 1;
             padding: 1.5rem;
+            overflow-y: auto;
         }
         
-        .member-card {
+        /* Project Cards */
+        .project-card {
             background: white;
             border-radius: 10px;
             padding: 1rem;
@@ -123,11 +189,90 @@
             margin-bottom: 0.75rem;
             transition: all 0.2s ease;
             border: 1px solid rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .project-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+        
+        .project-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        
+        .project-card-title {
+            font-weight: 600;
+            color: #334155;
+            margin: 0;
+            transition: color 0.2s ease;
+        }
+        
+        .project-card-title:hover {
+            color: var(--workspace-primary);
+        }
+        
+        .project-card-footer {
+            display: flex;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+        
+        .project-key {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            background: #f1f5f9;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            color: #64748b;
+        }
+        
+        .project-task-count {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-left: 0.75rem;
+        }
+        
+        .project-status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-ACTIVE { background: #e6f4ea; color: #1a7f37; }
+        .status-COMPLETED { background: #e6f2ff; color: #0366d6; }
+        .status-ON_HOLD { background: #fff8e1; color: #f9a825; }
+        .status-CANCELLED { background: #fce8e6; color: #d93025; }
+        
+        /* Member Cards */
+        .members-list {
+            display: grid;
+            gap: 0.75rem;
+        }
+        
+        .member-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            transition: all 0.2s ease;
+            border: 1px solid rgba(0,0,0,0.03);
+            display: flex;
+            align-items: center;
         }
         
         .member-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-color: rgba(99, 102, 241, 0.2);
         }
         
         .member-avatar {
@@ -141,6 +286,34 @@
             font-weight: bold;
             color: var(--workspace-primary);
             flex-shrink: 0;
+            margin-right: 1rem;
+            transition: transform 0.2s ease;
+        }
+        
+        .member-card:hover .member-avatar {
+            transform: scale(1.1);
+        }
+        
+        .member-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .member-name {
+            font-weight: 600;
+            color: #334155;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .member-email {
+            font-size: 0.8rem;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .role-badge {
@@ -152,35 +325,11 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            margin-left: 0.75rem;
+            flex-shrink: 0;
         }
         
-        .project-card {
-            background: white;
-            border-radius: 10px;
-            padding: 1rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-            margin-bottom: 0.75rem;
-            transition: all 0.2s ease;
-            border: 1px solid rgba(0,0,0,0.03);
-        }
-        
-        .project-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-        
-        .project-status {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-        
-        .status-ACTIVE { background: #e6f4ea; color: #1a7f37; }
-        .status-COMPLETED { background: #e6f2ff; color: #0366d6; }
-        .status-ON_HOLD { background: #fff8e1; color: #f9a825; }
-        .status-CANCELLED { background: #fce8e6; color: #d93025; }
-        
+        /* Empty States */
         .empty-state {
             padding: 2rem;
             text-align: center;
@@ -192,116 +341,319 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .empty-state:hover {
+            border-color: var(--workspace-primary);
+            background: rgba(99, 102, 241, 0.02);
         }
         
         .empty-state-icon {
             font-size: 2.5rem;
             color: #cbd5e1;
             margin-bottom: 1rem;
+            transition: color 0.3s ease;
         }
         
+        .empty-state:hover .empty-state-icon {
+            color: var(--workspace-primary);
+        }
+        
+        .empty-state-title {
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0.5rem;
+        }
+        
+        .empty-state-text {
+            color: #64748b;
+            margin-bottom: 1.5rem;
+            max-width: 300px;
+        }
+        
+        /* Buttons */
         .btn-workspace {
             background: var(--workspace-primary);
             border-color: var(--workspace-primary);
             color: white;
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
         }
         
         .btn-workspace:hover {
-            background: #4f46e5;
-            border-color: #4f46e5;
+            background: var(--workspace-primary-hover);
+            border-color: var(--workspace-primary-hover);
             color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+        
+        .btn-workspace-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        .btn-outline-workspace {
+            border-color: var(--workspace-primary);
+            color: var(--workspace-primary);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-outline-workspace:hover {
+            background: var(--workspace-primary);
+            color: white;
+        }
+        
+        /* Workspace Actions Dropdown - Fixed */
+        .workspace-actions {
+            position: relative;
+            z-index: 1100;
+        }
+        
+        .dropdown-toggle {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .dropdown-toggle:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .dropdown-menu {
+            z-index: 1200 !important;
+            position: absolute;
+            right: 0;
+            left: auto;
+            margin-top: 0.5rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: none;
+            padding: 0.5rem;
+        }
+        
+        .dropdown-item {
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .dropdown-item i {
+            margin-right: 0.75rem;
+            width: 1.25rem;
+            text-align: center;
+        }
+        
+        .dropdown-item:hover {
+            background: #f8fafc;
+            color: var(--workspace-primary);
+        }
+        
+        .dropdown-item.text-danger:hover {
+            color: #dc3545 !important;
+            background: #fff5f5;
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-in {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .workspace-header .d-flex {
+                flex-direction: column;
+            }
+            
+            .workspace-logo {
+                margin-bottom: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .workspace-header {
+                padding: 1.5rem;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
         }
     </style>
 </head>
 <body>
 <div layout:fragment="content">
     <div class="container">
+        <!-- Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show mb-4 animate-in" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show mb-4 animate-in" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
         <!-- Workspace Header -->
-        <div class="workspace-header">
-            <div class="d-flex align-items-start">
-                <div class="workspace-logo me-4" th:text="${#strings.substring(workspace.name, 0, 1).toUpperCase()}">W</div>
-                <div>
-                    <div class="d-flex align-items-center flex-wrap">
-                        <h2 class="me-3 mb-2" th:text="${workspace.name}">Workspace Name</h2>
-                        <span class="workspace-key mb-2" th:text="${workspace.workspaceKey}">WORK-1</span>
+        <div class="workspace-header animate-in">
+            <div class="d-flex justify-content-between flex-column flex-md-row">
+                <div class="d-flex align-items-start flex-column flex-md-row">
+                    <div class="workspace-logo me-3 me-md-4 mb-3 mb-md-0" 
+                         th:text="${#strings.substring(workspace.name, 0, 1).toUpperCase()}">W</div>
+                    <div class="text-center text-md-start">
+                        <div class="d-flex align-items-center flex-wrap justify-content-center justify-content-md-start">
+                            <h2 class="me-3 mb-2" th:text="${workspace.name}">Workspace Name</h2>
+                            <span class="workspace-key mb-2" th:text="${workspace.workspaceKey}">WORK-1</span>
+                        </div>
+                        <p class="mt-1 mb-0" th:text="${workspace.description} ?: 'Chưa có mô tả'">Workspace description</p>
                     </div>
-                    <p class="mt-1 mb-0" th:text="${workspace.description} ?: 'Chưa có mô tả'">Workspace description</p>
+                </div>
+                
+                <!-- Workspace Actions - Fixed Dropdown -->
+                <div class="workspace-actions mt-3 mt-md-0" th:if="${currentMember != null}">
+                    <div class="dropdown">
+                        <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" 
+                                aria-expanded="false" data-bs-display="static">
+                            <i class="fas fa-ellipsis-h me-1"></i> Tùy chọn
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <!-- Edit (only for ADMIN or OWNER) -->
+                            <li th:if="${currentMember.role != null && (currentMember.role.name() == 'OWNER' || currentMember.role.name() == 'ADMIN')}">
+                                <a class="dropdown-item" th:href="@{/workspaces/{id}/edit(id=${workspace.id})}">
+                                    <i class="fas fa-edit me-2"></i> Chỉnh sửa
+                                </a>
+                            </li>
+                
+                            <!-- Manage Members -->
+                        
+                
+                            <!-- Delete (only for OWNER) -->
+                            <li th:if="${currentMember.role != null && currentMember.role.name() == 'OWNER'}">
+                                <form th:action="@{/workspaces/{id}/delete(id=${workspace.id})}" method="post" class="d-inline">
+                                    <button type="submit" class="dropdown-item text-danger"
+                                        onclick="return confirm('⚠ CẢNH BÁO: Tất cả dự án và task trong workspace này sẽ bị xóa vĩnh viễn. Bạn có chắc chắn muốn xóa?');">
+                                        <i class="fas fa-trash me-2"></i> Xóa Workspace
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Stats Row -->
-        <div class="row mb-4 g-4">
-            <div class="col-md-3 col-6">
-                <div class="stats-card">
-                    <h3 th:text="${#lists.size(projects) ?: 0}">0</h3>
-                    <p class="mb-0">Dự án</p>
-                </div>
+        <!-- Stats Grid -->
+        <div class="stats-grid animate-in delay-1">
+            <div class="stats-card">
+                <h3 th:text="${#lists.size(projects) ?: 0}">0</h3>
+                <p class="mb-0">Dự án</p>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="stats-card">
-                    <h3 th:text="${#lists.size(workspace.members)}">0</h3>
-                    <p class="mb-0">Thành viên</p>
-                </div>
+            <div class="stats-card">
+                <h3 th:text="${#lists.size(workspace.members)}">0</h3>
+                <p class="mb-0">Thành viên</p>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="stats-card">
-                    <h3 th:text="${activeTasks}">0</h3>
-                    <p class="mb-0">Task đang làm</p>
-                </div>
+            <div class="stats-card">
+                <h3 th:text="${activeTasks}">0</h3>
+                <p class="mb-0">Task đang làm</p>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="stats-card">
-                    <h3 th:text="${completedTasks}">0</h3>
-                    <p class="mb-0">Task hoàn thành</p>
-                </div>
+            <div class="stats-card">
+                <h3 th:text="${completedTasks}">0</h3>
+                <p class="mb-0">Task hoàn thành</p>
             </div>
         </div>
 
-        <div class="row g-4">
+        <!-- Main Content -->
+        <div class="content-grid">
             <!-- Projects Section -->
-            <div class="col-lg-8">
+            <div class="projects-section animate-in delay-2">
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Dự án</h5>
-                        <a th:href="@{/workspaces/{id}/projects/create(id=${workspace.id})}" class="btn btn-workspace btn-sm">
+                    <div class="card-header">
+                        <h5>Dự án</h5>
+                        <a th:if="${currentMember != null && currentMember.role != null && (currentMember.role.name() == 'OWNER' || currentMember.role.name() == 'ADMIN')}"
+                           th:href="@{/workspaces/{id}/projects/create(id=${workspace.id})}" 
+                           class="btn btn-workspace btn-sm">
                             <i class="fas fa-plus me-2"></i>Tạo dự án
                         </a>
                     </div>
                     <div class="card-body">
                         <div th:if="${projects != null && !projects.isEmpty()}">
-                            <div th:each="project : ${projects}" class="project-card">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="mb-1">
-                                            <a th:href="@{/workspaces/{workspaceId}/projects/{id}(workspaceId=${workspace.id},id=${project.id})}" 
-                                               th:text="${project.name}">Project Name</a>
-                                        </h6>
-                                        <div class="d-flex align-items-center">
-                                            <span class="badge bg-secondary me-2" th:text="${project.projectKey}">PROJ-1</span>
-                                            <small class="text-muted" 
-                                                   th:text="${project.tasks != null ? project.tasks.size() + ' tasks' : '0 tasks'}">0 tasks</small>
-                                        </div>
-                                    </div>
+                            <div th:each="project : ${projects}" class="project-card mb-3">
+                                <div class="project-card-header">
+                                    <h6 class="project-card-title">
+                                        <a th:href="@{/workspaces/{workspaceId}/projects/{id}(workspaceId=${workspace.id},id=${project.id})}" 
+                                           th:text="${project.name}">Project Name</a>
+                                    </h6>
                                     <span class="project-status" 
                                           th:classappend="${'status-' + project.status}"
                                           th:text="${project.status}">ACTIVE</span>
                                 </div>
+                                <div class="project-card-footer">
+                                    <span class="project-key" th:text="${project.projectKey}">PROJ-1</span>
+                                    <span class="project-task-count" 
+                                          th:text="${project.tasks != null ? project.tasks.size() + ' tasks' : '0 tasks'}">0 tasks</span>
+                                </div>
                             </div>
+                            
                             <div th:if="${projects.size() > 5}" class="text-center mt-3">
-                                <a th:href="@{/workspaces/{id}/projects(id=${workspace.id})}" class="btn btn-outline-primary btn-sm">
+                                <a th:href="@{/workspaces/{id}/projects(id=${workspace.id})}" class="btn btn-outline-workspace btn-sm">
                                     <i class="fas fa-list me-2"></i>Xem tất cả dự án
                                 </a>
                             </div>
                         </div>
+                        
                         <div th:if="${projects == null || projects.isEmpty()}" class="empty-state">
                             <div class="empty-state-icon">
                                 <i class="fas fa-folder-open"></i>
                             </div>
-                            <h5 class="mb-2">Chưa có dự án nào</h5>
-                            <p class="text-muted mb-3">Bắt đầu bằng cách tạo dự án đầu tiên của bạn</p>
-                            <a th:href="@{/workspaces/{id}/projects/create(id=${workspace.id})}" class="btn btn-workspace btn-sm">
-                                <i class="fas fa-plus me-2"></i>Tạo dự án
+                            <h5 class="empty-state-title">Chưa có dự án nào</h5>
+                            <p class="empty-state-text">Bắt đầu bằng cách tạo dự án đầu tiên của bạn</p>
+                            <a th:if="${currentMember != null && currentMember.role != null && (currentMember.role.name() == 'OWNER' || currentMember.role.name() == 'ADMIN')}"
+                               th:href="@{/workspaces/{id}/projects/create(id=${workspace.id})}" 
+                               class="btn btn-workspace btn-sm">
+                               <i class="fas fa-plus me-2"></i>Tạo dự án
                             </a>
                         </div>
                     </div>
@@ -309,37 +661,37 @@
             </div>
 
             <!-- Members Section -->
-            <div class="col-lg-4">
+            <div class="members-section animate-in delay-3">
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Thành viên</h5>
+                    <div class="card-header">
+                        <h5>Thành viên</h5>
                         <a th:href="@{/workspaces/{id}/members(id=${workspace.id})}" class="btn btn-workspace btn-sm">
                             <i class="fas fa-users-cog me-2"></i>Quản lý
                         </a>
                     </div>
                     <div class="card-body">
-                        <div th:if="${#lists.isEmpty(workspace.members)}" class="empty-state py-3">
+                        <div th:if="${#lists.isEmpty(workspace.members)}" class="empty-state">
                             <div class="empty-state-icon">
                                 <i class="fas fa-users"></i>
                             </div>
-                            <p class="text-muted mb-0">Chưa có thành viên</p>
+                            <p class="empty-state-text">Chưa có thành viên nào trong workspace</p>
                         </div>
                         
-                        <div th:each="member : ${workspace.members}" class="member-card">
-                            <div class="d-flex align-items-center">
-                                <div class="member-avatar me-3" 
+                        <div th:if="${!#lists.isEmpty(workspace.members)}" class="members-list">
+                            <div th:each="member : ${workspace.members}" class="member-card">
+                                <div class="member-avatar" 
                                      th:text="${#strings.substring(member.user.fullName, 0, 1).toUpperCase()}">A</div>
-                                <div class="flex-grow-1 overflow-hidden">
-                                    <h6 class="mb-0 text-truncate" th:text="${member.user.fullName}">Member Name</h6>
-                                    <small class="text-muted text-truncate d-block" th:text="${member.user.email}">email@example.com</small>
+                                <div class="member-info">
+                                    <h6 class="member-name" th:text="${member.user.fullName}">Member Name</h6>
+                                    <p class="member-email" th:text="${member.user.email}">email@example.com</p>
                                 </div>
-                                <span class="role-badge ms-2" th:text="${member.role}">OWNER</span>
+                                <span class="role-badge" th:text="${member.role}">OWNER</span>
                             </div>
                         </div>
                         
-                        <div th:if="${#lists.size(workspace.members) > 5}" class="text-center mt-2">
-                            <a th:href="@{/workspaces/{id}/members(id=${workspace.id})}" class="text-primary small">
-                                Xem tất cả thành viên
+                        <div th:if="${#lists.size(workspace.members) > 5}" class="text-center mt-3">
+                            <a th:href="@{/workspaces/{id}/members(id=${workspace.id})}" class="btn btn-outline-workspace btn-sm">
+                                <i class="fas fa-users me-2"></i>Xem tất cả thành viên
                             </a>
                         </div>
                     </div>
@@ -350,54 +702,39 @@
 </div>
 
 <script>
-    // Thêm hiệu ứng khi load trang
     document.addEventListener('DOMContentLoaded', function() {
-        // Animation cho các stats card
-        const statsCards = document.querySelectorAll('.stats-card');
-        statsCards.forEach((card, index) => {
-            setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 100);
+        // Initialize dropdowns
+        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+        var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl);
         });
-        
-        // Đảm bảo các phần tử chiếm đủ chiều cao
-        function adjustHeights() {
-            const cards = document.querySelectorAll('.card');
-            let maxHeight = 0;
-            
-            // Reset heights
-            cards.forEach(card => {
-                card.style.height = 'auto';
-            });
-            
-            // Find max height in each row
-            const rowGroups = {};
-            cards.forEach(card => {
-                const row = card.closest('.row');
-                if (!rowGroups[row.id]) {
-                    rowGroups[row.id] = [];
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            dropdownElementList.forEach(function (dropdownToggle) {
+                var dropdownMenu = dropdownToggle.nextElementSibling;
+                if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                    var dropdownInstance = bootstrap.Dropdown.getInstance(dropdownToggle);
+                    dropdownInstance.hide();
                 }
-                rowGroups[row.id].push(card);
             });
-            
-            // Set equal heights for cards in the same row
-            Object.values(rowGroups).forEach(group => {
-                maxHeight = 0;
-                group.forEach(card => {
-                    const height = card.offsetHeight;
-                    if (height > maxHeight) maxHeight = height;
-                });
-                
-                group.forEach(card => {
-                    card.style.height = maxHeight + 'px';
-                });
+        });
+
+        // Confirm workspace deletion
+        const deleteForm = document.querySelector('form[action*="/delete"]');
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function(e) {
+                if (!confirm('⚠ CẢNH BÁO: Tất cả dự án và task trong workspace này sẽ bị xóa vĩnh viễn. Bạn có chắc chắn muốn xóa?')) {
+                    e.preventDefault();
+                }
             });
         }
-        
-        // Chạy lần đầu và khi resize
-        adjustHeights();
-        window.addEventListener('resize', adjustHeights);
+
+        // Smooth scroll for card bodies
+        const cardBodies = document.querySelectorAll('.card-body');
+        cardBodies.forEach(body => {
+            body.style.scrollBehavior = 'smooth';
+        });
     });
 </script>
 </body>

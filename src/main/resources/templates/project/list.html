@@ -36,7 +36,10 @@
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 th:text="'Dự án trong ' + ${workspace.name}">Dự án</h2>
-            <a th:href="@{/workspaces/{id}/projects/create(id=${workspace.id})}" class="btn btn-primary">
+            <!-- Chỉ hiển thị nút tạo dự án cho OWNER và ADMIN -->
+            <a th:if="${currentMember != null && (currentMember.role == T(com.project.userauthservice.entity.workspace.WorkspaceMember.WorkspaceRole).OWNER || currentMember.role == T(com.project.userauthservice.entity.workspace.WorkspaceMember.WorkspaceRole).ADMIN)}"
+               th:href="@{/workspaces/{id}/projects/create(id=${workspace.id})}" 
+               class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Tạo dự án mới
             </a>
         </div>
@@ -45,6 +48,12 @@
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>
             <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${errorMessage}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
@@ -104,7 +113,10 @@
             <i class="fas fa-project-diagram fa-4x text-muted mb-3"></i>
             <h4>Chưa có dự án nào</h4>
             <p class="text-muted">Tạo dự án đầu tiên để quản lý công việc</p>
-            <a th:href="@{/workspaces/{id}/projects/create(id=${workspace.id})}" class="btn btn-primary mt-3">
+            <!-- Chỉ hiển thị nút tạo dự án cho OWNER và ADMIN -->
+            <a th:if="${currentMember != null && (currentMember.role == T(com.project.userauthservice.entity.workspace.WorkspaceMember.WorkspaceRole).OWNER || currentMember.role == T(com.project.userauthservice.entity.workspace.WorkspaceMember.WorkspaceRole).ADMIN)}"
+               th:href="@{/workspaces/{id}/projects/create(id=${workspace.id})}" 
+               class="btn btn-primary mt-3">
                 <i class="fas fa-plus me-2"></i>Tạo dự án mới
             </a>
         </div>

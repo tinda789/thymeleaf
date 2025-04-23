@@ -4,8 +4,10 @@ import com.project.userauthservice.dto.ProjectCreateDto;
 import com.project.userauthservice.entity.project.Project;
 import com.project.userauthservice.entity.task.Task;
 import com.project.userauthservice.entity.workspace.Workspace;
+import com.project.userauthservice.entity.workspace.WorkspaceMember;
 import com.project.userauthservice.entity.user.User;
 import com.project.userauthservice.repository.UserRepository;
+import com.project.userauthservice.repository.WorkspaceMemberRepository;
 import com.project.userauthservice.service.ProjectService;
 import com.project.userauthservice.service.WorkspaceService;
 import com.project.userauthservice.service.TaskService;
@@ -31,14 +33,25 @@ public class ProjectController {
     private final WorkspaceService workspaceService;
     private final TaskService taskService;
     private final UserRepository userRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
     @GetMapping
-    public String listProjects(@PathVariable Long workspaceId, Model model) {
+    public String listProjects(@PathVariable Long workspaceId, 
+                               Model model,
+                               @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+                
         Workspace workspace = workspaceService.getWorkspaceById(workspaceId);
         List<Project> projects = projectService.getProjectsByWorkspace(workspaceId);
         
+        // Lấy thông tin member hiện tại để kiểm tra quyền
+        WorkspaceMember currentMember = workspaceMemberRepository.findByWorkspaceAndUser(workspace, currentUser)
+                .orElseThrow(() -> new RuntimeException("Bạn không phải là thành viên của workspace này"));
+        
         model.addAttribute("workspace", workspace);
         model.addAttribute("projects", projects);
+        model.addAttribute("currentMember", currentMember);
         return "project/list";
     }
 
@@ -55,6 +68,15 @@ public class ProjectController {
             
             Workspace workspace = workspaceService.getWorkspaceById(workspaceId);
             
+            // Kiểm tra quyền - chỉ OWNER và ADMIN mới được tạo project
+            WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)
+                .orElseThrow(() -> new RuntimeException("Bạn không phải là thành viên của workspace này"));
+                
+            if (member.getRole() != WorkspaceMember.WorkspaceRole.OWNER && 
+                member.getRole() != WorkspaceMember.WorkspaceRole.ADMIN) {
+                throw new RuntimeException("Bạn không có quyền tạo dự án trong workspace này");
+            }
+            
             // Kiểm tra giới hạn dự án theo loại tài khoản
             projectService.validateProjectCreation(workspace, user);
             
@@ -63,7 +85,7 @@ public class ProjectController {
             return "project/create";
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-            return "redirect:/subscription";
+            return "redirect:/workspaces/" + workspaceId;
         }
     }
 
@@ -82,6 +104,15 @@ public class ProjectController {
             
             Workspace workspace = workspaceService.getWorkspaceById(workspaceId);
             
+            // Kiểm tra quyền - chỉ OWNER và ADMIN mới được tạo project
+            WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)
+                .orElseThrow(() -> new RuntimeException("Bạn không phải là thành viên của workspace này"));
+                
+            if (member.getRole() != WorkspaceMember.WorkspaceRole.OWNER && 
+                member.getRole() != WorkspaceMember.WorkspaceRole.ADMIN) {
+                throw new RuntimeException("Bạn không có quyền tạo dự án trong workspace này");
+            }
+            
             // Kiểm tra giới hạn dự án theo loại tài khoản
             projectService.validateProjectCreation(workspace, user);
             
@@ -96,14 +127,18 @@ public class ProjectController {
             return "redirect:/workspaces/" + workspaceId + "/projects/" + project.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-            return "redirect:/workspaces/" + workspaceId + "/projects/create";
+            return "redirect:/workspaces/" + workspaceId;
         }
     }
 
     @GetMapping("/{id}")
     public String viewProject(@PathVariable Long workspaceId, 
                             @PathVariable Long id, 
-                            Model model) {
+                            Model model,
+                            @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+                            
         Project project = projectService.getProjectById(id);
         
         // Kiểm tra project có thuộc workspace này không
@@ -128,12 +163,17 @@ public class ProjectController {
         
         double progressPercentage = totalTasks > 0 ? (doneTasks * 100.0 / totalTasks) : 0;
 
+        // Lấy thông tin member hiện tại để kiểm tra quyền
+        WorkspaceMember currentMember = workspaceMemberRepository.findByWorkspaceAndUser(project.getWorkspace(), currentUser)
+                .orElseThrow(() -> new RuntimeException("Bạn không phải là thành viên của workspace này"));
+
         model.addAttribute("project", project);
         model.addAttribute("workspace", project.getWorkspace());
         model.addAttribute("tasksByStatus", tasksByStatus);
         model.addAttribute("totalTasks", totalTasks);
         model.addAttribute("doneTasks", doneTasks);
         model.addAttribute("progressPercentage", progressPercentage);
+        model.addAttribute("currentMember", currentMember);
         
         return "project/view";
     }
